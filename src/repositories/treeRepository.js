@@ -29,7 +29,7 @@ class TreeRepository {
       tree.id,
       tree.nama_silsilah,
       tree.created_by_user_id,
-      tree.max_members || 50,
+      tree.max_members || 30,
     ]);
     return this.findById(tree.id, conn);
   }
