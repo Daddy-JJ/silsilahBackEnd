@@ -168,6 +168,25 @@ class TreeService {
         role,
       });
 
+      // Catat di riwayat undangan agar masuk ke riwayat user panel
+      if (this.treeInvitationRepository) {
+        try {
+          const inviteId = uuidv4();
+          const token = uuidv4().replace(/-/g, '');
+          await this.treeInvitationRepository.create({
+            id: inviteId,
+            tree_id: treeId,
+            inviter_user_id: currentUserId,
+            email: targetUser.email,
+            role,
+            token,
+          });
+          await this.treeInvitationRepository.updateStatus(inviteId, 'ACCEPTED');
+        } catch (e) {
+          // Abaikan jika sudah tercatat
+        }
+      }
+
       // Kirim email notifikasi bahwa ia telah ditambahkan ke semesta
       if (this.emailService) {
         this.emailService.sendCollaborationInviteEmail({

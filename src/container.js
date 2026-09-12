@@ -10,6 +10,7 @@ const UpgradePlanRepository = require('./repositories/upgradePlanRepository');
 const SystemSettingRepository = require('./repositories/systemSettingRepository');
 const TransactionRepository = require('./repositories/transactionRepository');
 const TreeInvitationRepository = require('./repositories/treeInvitationRepository');
+const PasswordResetRepository = require('./repositories/passwordResetRepository');
 
 // Services
 const AuthService = require('./services/authService');
@@ -49,6 +50,7 @@ const upgradePlanRepository = new UpgradePlanRepository(pool);
 const systemSettingRepository = new SystemSettingRepository(pool);
 const transactionRepository = new TransactionRepository(pool);
 const treeInvitationRepository = new TreeInvitationRepository(pool);
+const passwordResetRepository = new PasswordResetRepository(pool);
 
 // 2. Lapisan Services
 const emailService = new EmailService();
@@ -59,7 +61,8 @@ const authService = new AuthService(
   googleClientId,
   treeRepository,
   treeInvitationRepository,
-  emailService
+  emailService,
+  passwordResetRepository
 );
 const treeService = new TreeService(
   treeRepository,

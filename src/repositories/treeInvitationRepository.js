@@ -84,6 +84,29 @@ class TreeInvitationRepository {
     const [res] = await this._getExecutor(conn).query(sql, [id]);
     return res.affectedRows > 0;
   }
+
+  async findAllByInviterId(inviterUserId, conn = null) {
+    const sql = `
+      SELECT 
+        ti.id,
+        ti.tree_id,
+        t.nama_silsilah AS tree_name,
+        ti.email,
+        COALESCE(u.nama_lengkap, ti.email) AS recipient_name,
+        ti.role,
+        ti.token,
+        ti.status,
+        ti.created_at,
+        ti.updated_at
+      FROM tree_invitations ti
+      JOIN trees t ON ti.tree_id = t.id
+      LEFT JOIN users u ON ti.email = u.email
+      WHERE ti.inviter_user_id = ?
+      ORDER BY ti.created_at DESC
+    `;
+    const [rows] = await this._getExecutor(conn).query(sql, [inviterUserId]);
+    return rows;
+  }
 }
 
 module.exports = TreeInvitationRepository;

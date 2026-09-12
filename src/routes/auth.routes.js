@@ -20,7 +20,14 @@ function createAuthRoutes({ authController, authMiddleware }) {
   router.post('/register', authLimiter, validateBody(registerSchema), authController.register);
   router.post('/login', authLimiter, validateBody(loginSchema), authController.login);
   router.post('/google', authLimiter, authController.googleLogin);
+  router.post('/forgot-password', authLimiter, authController.forgotPassword);
+  router.post('/reset-password', authLimiter, authController.resetPassword);
+
+  // Protected routes (memerlukan token login)
   router.get('/me', authMiddleware, authController.getMe);
+  router.put('/profile', authMiddleware, authController.updateProfile);
+  router.put('/change-password', authMiddleware, authController.changePassword);
+  router.get('/my-invitations', authMiddleware, authController.getMyInvitations);
 
   return router;
 }

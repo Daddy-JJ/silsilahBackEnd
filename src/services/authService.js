@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
@@ -12,7 +13,8 @@ class AuthService {
     googleClientId = null,
     treeRepository = null,
     treeInvitationRepository = null,
-    emailService = null
+    emailService = null,
+    passwordResetRepository = null
   ) {
     this.userRepository = userRepository;
     this.jwtSecret = jwtSecret;
@@ -22,6 +24,7 @@ class AuthService {
     this.treeRepository = treeRepository;
     this.treeInvitationRepository = treeInvitationRepository;
     this.emailService = emailService;
+    this.passwordResetRepository = passwordResetRepository;
   }
 
   async register({ email, password, nama_lengkap }) {
@@ -169,6 +172,186 @@ class AuthService {
       throw new NotFoundError('Pengguna tidak ditemukan.');
     }
     return user;
+  }
+
+  async forgotPassword(email) {
+    if (!email || !email.trim()) {
+      throw new BadRequestError('Alamat email wajib diisi.');
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await this.userRepository.findByEmail(cleanEmail);
+
+    // Keamanan standar: jika email tidak terdaftar, tetap kembalikan pesan netral
+    if (!user) {
+      return {
+        message: 'Jika alamat email terdaftar, tautan pemulihan telah dikirimkan ke kotak masuk email Anda.',
+      };
+    }
+
+    if (user.auth_provider === 'GOOGLE' && !user.password_hash) {
+      return {
+        message: 'Akun ini terdaftar melalui Google Sign-In. Silakan masuk menggunakan tombol Masuk dengan Google.',
+      };
+    }
+
+    if (!this.passwordResetRepository) {
+      throw new BadRequestError('Layanan pemulihan kata sandi belum terkonfigurasi.');
+    }
+
+    // Buat token pemulihan acak 32-byte (64 hex characters)
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 60 menit kedaluwarsa
+
+    // Batalkan token lama yang belum terpakai untuk email ini
+    await this.passwordResetRepository.invalidatePreviousTokens(cleanEmail);
+
+    // Simpan token baru ke database
+    await this.passwordResetRepository.create({
+      id: uuidv4(),
+      email: cleanEmail,
+      token,
+      expires_at,
+    });
+
+    // Kirim email resmi pemulihan kata sandi
+    if (this.emailService) {
+      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+      const resetUrl = `${appFrontendUrl}?reset_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
+
+      this.emailService.sendPasswordResetEmail({
+        to: cleanEmail,
+        name: user.nama_lengkap,
+        resetUrl,
+      }).catch(err => console.error('[AuthService] Gagal kirim email reset password:', err.message));
+    }
+
+    return {
+      message: 'Tautan pemulihan kata sandi telah dikirimkan ke email Anda. Periksa kotak masuk atau spam.',
+    };
+  }
+
+  async resetPassword({ email, token, newPassword }) {
+    if (!email || !token || !newPassword) {
+      throw new BadRequestError('Email, token, dan kata sandi baru wajib diisi.');
+    }
+
+    if (newPassword.length < 6) {
+      throw new BadRequestError('Kata sandi baru minimal 6 karakter.');
+    }
+
+    if (!this.passwordResetRepository) {
+      throw new BadRequestError('Layanan pemulihan kata sandi belum terkonfigurasi.');
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const validReset = await this.passwordResetRepository.findValidToken(cleanEmail, token);
+
+    if (!validReset) {
+      throw new BadRequestError('Tautan pemulihan kata sandi tidak valid atau telah kedaluwarsa. Silakan ajukan permohonan baru.');
+    }
+
+    const user = await this.userRepository.findByEmail(cleanEmail);
+    if (!user) {
+      throw new NotFoundError('Akun pengguna tidak ditemukan.');
+    }
+
+    // Hash kata sandi baru
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    // Perbarui kata sandi di database
+    await this.userRepository.updatePassword(user.id, password_hash);
+
+    // Tandai token telah terpakai
+    await this.passwordResetRepository.markAsUsed(validReset.id);
+
+    return {
+      message: 'Kata sandi berhasil diperbarui! Silakan masuk dengan kata sandi baru Anda.',
+    };
+  }
+
+  async updateProfile(userId, { nama_lengkap, email }) {
+    if (!nama_lengkap || !nama_lengkap.trim()) {
+      throw new BadRequestError('Nama lengkap wajib diisi.');
+    }
+    if (!email || !email.trim()) {
+      throw new BadRequestError('Alamat email wajib diisi.');
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const currentUser = await this.userRepository.findById(userId);
+    if (!currentUser) {
+      throw new NotFoundError('Pengguna tidak ditemukan.');
+    }
+
+    // Jika email diubah, pastikan tidak bentrok dengan akun lain
+    if (cleanEmail !== currentUser.email.toLowerCase()) {
+      const existing = await this.userRepository.findByEmail(cleanEmail);
+      if (existing && existing.id !== userId) {
+        throw new BadRequestError('Alamat email tersebut sudah digunakan oleh akun lain.');
+      }
+    }
+
+    const updatedUser = await this.userRepository.updateProfile(userId, {
+      nama_lengkap: nama_lengkap.trim(),
+      email: cleanEmail,
+    });
+
+    const token = this._generateToken(updatedUser);
+
+    return {
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        nama_lengkap: updatedUser.nama_lengkap,
+        avatar_url: updatedUser.avatar_url,
+        auth_provider: updatedUser.auth_provider,
+        system_role: updatedUser.system_role,
+        created_at: updatedUser.created_at,
+      },
+      token,
+      message: 'Profil berhasil diperbarui!',
+    };
+  }
+
+  async changePassword(userId, { oldPassword, newPassword }) {
+    if (!oldPassword || !newPassword) {
+      throw new BadRequestError('Kata sandi saat ini dan kata sandi baru wajib diisi.');
+    }
+
+    if (newPassword.length < 6) {
+      throw new BadRequestError('Kata sandi baru minimal 6 karakter.');
+    }
+
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('Pengguna tidak ditemukan.');
+    }
+
+    const userWithPass = await this.userRepository.findByEmail(user.email);
+    if (!userWithPass || !userWithPass.password_hash) {
+      throw new BadRequestError('Akun Anda terhubung melalui Google Sign-In dan tidak memiliki kata sandi lokal.');
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, userWithPass.password_hash);
+    if (!isMatch) {
+      throw new UnauthorizedError('Kata sandi saat ini yang Anda masukkan salah.');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    await this.userRepository.updatePassword(userId, password_hash);
+
+    return {
+      message: 'Kata sandi akun Anda berhasil diperbarui!',
+    };
+  }
+
+  async getMyInvitations(userId) {
+    if (!this.treeInvitationRepository) return [];
+    return await this.treeInvitationRepository.findAllByInviterId(userId);
   }
 
   async _claimPendingInvitations(user) {

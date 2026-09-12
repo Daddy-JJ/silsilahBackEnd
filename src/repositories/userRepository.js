@@ -53,6 +53,26 @@ class UserRepository {
     await this._getExecutor(conn).query(sql, [google_id, avatar_url, id]);
     return this.findById(id, conn);
   }
+
+  async updateProfile(id, { nama_lengkap, email }, conn = null) {
+    const sql = `
+      UPDATE users
+      SET nama_lengkap = ?, email = ?
+      WHERE id = ?
+    `;
+    await this._getExecutor(conn).query(sql, [nama_lengkap, email.toLowerCase(), id]);
+    return this.findById(id, conn);
+  }
+
+  async updatePassword(id, password_hash, conn = null) {
+    const sql = `
+      UPDATE users
+      SET password_hash = ?
+      WHERE id = ?
+    `;
+    await this._getExecutor(conn).query(sql, [password_hash, id]);
+    return this.findById(id, conn);
+  }
 }
 
 module.exports = UserRepository;
