@@ -43,12 +43,38 @@ class TreeController {
 
   addTreeMember = async (req, res, next) => {
     try {
-      const member = await this.treeService.addMemberToTree(
+      const result = await this.treeService.addMemberToTree(
         req.params.treeId,
         req.user.id,
         req.body
       );
-      return sendSuccess(res, member, 'Anggota pohon berhasil ditambahkan', 201);
+      return sendSuccess(res, result.data, result.message, 201);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resendInvitation = async (req, res, next) => {
+    try {
+      const result = await this.treeService.resendInvitation(
+        req.params.treeId,
+        req.user.id,
+        req.params.invitationId
+      );
+      return sendSuccess(res, null, result.message, 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  revokeInvitation = async (req, res, next) => {
+    try {
+      const result = await this.treeService.revokeInvitation(
+        req.params.treeId,
+        req.user.id,
+        req.params.invitationId
+      );
+      return sendSuccess(res, null, result.message, 200);
     } catch (error) {
       next(error);
     }

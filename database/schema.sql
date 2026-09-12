@@ -148,3 +148,21 @@ CREATE TABLE transactions (
     FOREIGN KEY (tree_id) REFERENCES trees(id) ON DELETE CASCADE,
     FOREIGN KEY (plan_id) REFERENCES upgrade_plans(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabel Undangan Kolaborator (Organic Growth Loop)
+CREATE TABLE IF NOT EXISTS tree_invitations (
+    id VARCHAR(36) PRIMARY KEY,
+    tree_id VARCHAR(36) NOT NULL,
+    inviter_user_id VARCHAR(36) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    role ENUM('ADMIN_UTAMA', 'KONTRIBUTOR', 'VIEWER') NOT NULL DEFAULT 'KONTRIBUTOR',
+    token VARCHAR(64) NOT NULL UNIQUE,
+    status ENUM('PENDING', 'ACCEPTED', 'REVOKED', 'EXPIRED') NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tree_id) REFERENCES trees(id) ON DELETE CASCADE,
+    FOREIGN KEY (inviter_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_tree_invites (tree_id, status),
+    INDEX idx_email_status (email, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -5,10 +5,10 @@ const { registerSchema, loginSchema } = require('../validations');
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 15, // Limit each IP to 15 requests per `window` (here, per 15 minutes)
+  max: process.env.NODE_ENV === 'production' ? 15 : 500, // Lebih longgar di dev
   message: {
     success: false,
-    message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi setelah 15 menit',
+    message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti.',
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers

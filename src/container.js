@@ -9,6 +9,7 @@ const MarriageRepository = require('./repositories/marriageRepository');
 const UpgradePlanRepository = require('./repositories/upgradePlanRepository');
 const SystemSettingRepository = require('./repositories/systemSettingRepository');
 const TransactionRepository = require('./repositories/transactionRepository');
+const TreeInvitationRepository = require('./repositories/treeInvitationRepository');
 
 // Services
 const AuthService = require('./services/authService');
@@ -18,6 +19,7 @@ const ApprovalService = require('./services/approvalService');
 const MarriageService = require('./services/marriageService');
 const AdminService = require('./services/adminService');
 const PaymentService = require('./services/paymentService');
+const EmailService = require('./services/emailService');
 
 // Controllers
 const AuthController = require('./controllers/authController');
@@ -46,10 +48,26 @@ const marriageRepository = new MarriageRepository(pool);
 const upgradePlanRepository = new UpgradePlanRepository(pool);
 const systemSettingRepository = new SystemSettingRepository(pool);
 const transactionRepository = new TransactionRepository(pool);
+const treeInvitationRepository = new TreeInvitationRepository(pool);
 
 // 2. Lapisan Services
-const authService = new AuthService(userRepository, jwtSecret, jwtExpiresIn, googleClientId);
-const treeService = new TreeService(treeRepository, userRepository, pool);
+const emailService = new EmailService();
+const authService = new AuthService(
+  userRepository,
+  jwtSecret,
+  jwtExpiresIn,
+  googleClientId,
+  treeRepository,
+  treeInvitationRepository,
+  emailService
+);
+const treeService = new TreeService(
+  treeRepository,
+  userRepository,
+  pool,
+  treeInvitationRepository,
+  emailService
+);
 const familyMemberService = new FamilyMemberService(familyMemberRepository, treeRepository, pool);
 const approvalService = new ApprovalService(
   approvalRepository,
@@ -102,6 +120,7 @@ module.exports = {
   upgradePlanRepository,
   systemSettingRepository,
   transactionRepository,
+  treeInvitationRepository,
   // Services
   authService,
   treeService,
@@ -110,6 +129,7 @@ module.exports = {
   marriageService,
   adminService,
   paymentService,
+  emailService,
   // Controllers
   authController,
   treeController,

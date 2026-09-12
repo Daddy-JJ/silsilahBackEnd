@@ -48,6 +48,22 @@ function createTreeRoutes({ treeController, authMiddleware, requireTreeRole }) {
     treeController.addTreeMember
   );
 
+  // Kirim ulang email undangan kolaborator (Hanya ADMIN_UTAMA)
+  router.post(
+    '/:treeId/invitations/:invitationId/resend',
+    authMiddleware,
+    requireTreeRole(['ADMIN_UTAMA']),
+    treeController.resendInvitation
+  );
+
+  // Batalkan undangan kolaborator tertunda (Hanya ADMIN_UTAMA)
+  router.delete(
+    '/:treeId/invitations/:invitationId',
+    authMiddleware,
+    requireTreeRole(['ADMIN_UTAMA']),
+    treeController.revokeInvitation
+  );
+
   // Ubah role kolaborator (Hanya ADMIN_UTAMA)
   router.put(
     '/:treeId/collaborators/:userId',

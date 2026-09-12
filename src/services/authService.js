@@ -5,12 +5,23 @@ const { OAuth2Client } = require('google-auth-library');
 const { BadRequestError, UnauthorizedError, NotFoundError } = require('../errors/AppError');
 
 class AuthService {
-  constructor(userRepository, jwtSecret, jwtExpiresIn = '7d', googleClientId = null) {
+  constructor(
+    userRepository,
+    jwtSecret,
+    jwtExpiresIn = '7d',
+    googleClientId = null,
+    treeRepository = null,
+    treeInvitationRepository = null,
+    emailService = null
+  ) {
     this.userRepository = userRepository;
     this.jwtSecret = jwtSecret;
     this.jwtExpiresIn = jwtExpiresIn;
     this.googleClientId = googleClientId || process.env.GOOGLE_CLIENT_ID;
     this.googleClient = new OAuth2Client(this.googleClientId);
+    this.treeRepository = treeRepository;
+    this.treeInvitationRepository = treeInvitationRepository;
+    this.emailService = emailService;
   }
 
   async register({ email, password, nama_lengkap }) {
@@ -29,6 +40,19 @@ class AuthService {
       password_hash,
       nama_lengkap,
     });
+
+    // Klaim otomatis semua undangan kolaborator yang tertunda untuk email ini
+    await this._claimPendingInvitations(newUser);
+
+    // Kirim email selamat datang via email resmi
+    if (this.emailService) {
+      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+      this.emailService.sendWelcomeEmail({
+        to: newUser.email,
+        name: newUser.nama_lengkap,
+        activationUrl: appFrontendUrl,
+      }).catch(err => console.error('[AuthService] Gagal kirim welcome email:', err.message));
+    }
 
     const token = this._generateToken(newUser);
 
@@ -120,6 +144,9 @@ class AuthService {
       }
     }
 
+    // Auto-claim jika ada undangan tertunda untuk akun Google ini
+    await this._claimPendingInvitations(user);
+
     const token = this._generateToken(user);
 
     return {
@@ -142,6 +169,29 @@ class AuthService {
       throw new NotFoundError('Pengguna tidak ditemukan.');
     }
     return user;
+  }
+
+  async _claimPendingInvitations(user) {
+    if (!this.treeInvitationRepository || !this.treeRepository) return;
+    try {
+      const pendingInvites = await this.treeInvitationRepository.findPendingByEmail(user.email);
+      for (const invite of pendingInvites) {
+        // Cek apakah sudah terdaftar di tree
+        const existingRole = await this.treeRepository.getUserRoleInTree(invite.tree_id, user.id);
+        if (!existingRole) {
+          await this.treeRepository.addMember({
+            id: uuidv4(),
+            tree_id: invite.tree_id,
+            user_id: user.id,
+            role: invite.role,
+          });
+        }
+        await this.treeInvitationRepository.updateStatus(invite.id, 'ACCEPTED');
+        console.log(`[AuthService] Berhasil mengklaim undangan ${invite.id} untuk user ${user.email} di semesta ${invite.tree_id} sebagai ${invite.role}`);
+      }
+    } catch (err) {
+      console.error('[AuthService] Gagal auto-claim undangan:', err.message);
+    }
   }
 
   _generateToken(user) {

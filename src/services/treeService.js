@@ -2,10 +2,12 @@ const { v4: uuidv4 } = require('uuid');
 const { NotFoundError, ForbiddenError, BadRequestError, ConflictError } = require('../errors/AppError');
 
 class TreeService {
-  constructor(treeRepository, userRepository, pool) {
+  constructor(treeRepository, userRepository, pool, treeInvitationRepository = null, emailService = null) {
     this.treeRepository = treeRepository;
     this.userRepository = userRepository;
     this.pool = pool;
+    this.treeInvitationRepository = treeInvitationRepository;
+    this.emailService = emailService;
   }
 
   async createTree(userId, { nama_silsilah }) {
@@ -100,7 +102,16 @@ class TreeService {
   }
 
   async getCollaborators(treeId) {
-    return this.treeRepository.getCollaboratorsInTree(treeId);
+    const activeMembers = await this.treeRepository.getCollaboratorsInTree(treeId);
+    let pendingInvitations = [];
+    if (this.treeInvitationRepository) {
+      pendingInvitations = await this.treeInvitationRepository.findPendingByTreeId(treeId);
+    }
+
+    return {
+      members: activeMembers,
+      pendingInvitations,
+    };
   }
 
   async addMemberToTree(treeId, currentUserId, { targetUserEmail, role }) {
@@ -110,43 +121,175 @@ class TreeService {
       throw new ForbiddenError('Hanya ADMIN_UTAMA yang dapat mengelola anggota pohon.');
     }
 
-    // Batasan Fase 1: Max 1 kolaborator tambahan per semesta keluarga
-    const currentInvitedCount = await this.treeRepository.countInvitedCollaborators(treeId);
-    if (currentInvitedCount >= 1) {
-      throw new ForbiddenError(
-        'Under development: Batas fase ini adalah maksimal 1 kolaborator per semesta keluarga. Nantikan update dari kami!'
-      );
-    }
-
-    const targetUser = await this.userRepository.findByEmail(targetUserEmail);
-    if (!targetUser) {
-      throw new NotFoundError('Pengguna dengan email tersebut tidak ditemukan.');
-    }
-
     const validRoles = ['ADMIN_UTAMA', 'KONTRIBUTOR', 'VIEWER'];
     if (!validRoles.includes(role)) {
       throw new BadRequestError(`Role tidak valid. Pilihan: ${validRoles.join(', ')}`);
     }
 
-    const existingRole = await this.treeRepository.getUserRoleInTree(treeId, targetUser.id);
-    if (existingRole) {
-      throw new ConflictError(`Pengguna sudah menjadi anggota pohon ini dengan peran ${existingRole}.`);
+    const targetEmail = targetUserEmail.trim().toLowerCase();
+    const inviter = await this.userRepository.findById(currentUserId);
+    if (inviter && inviter.email.toLowerCase() === targetEmail) {
+      throw new BadRequestError('Anda tidak dapat mengundang akun Anda sendiri.');
     }
 
-    const memberId = uuidv4();
-    await this.treeRepository.addMember({
-      id: memberId,
+    // Batasan Fase 1: Max 1 kolaborator tambahan (aktif + pending) per semesta keluarga
+    const currentInvitedCount = await this.treeRepository.countInvitedCollaborators(treeId);
+    let pendingCount = 0;
+    if (this.treeInvitationRepository) {
+      pendingCount = await this.treeInvitationRepository.countPendingByTreeId(treeId);
+    }
+
+    if (currentInvitedCount + pendingCount >= 1) {
+      throw new ForbiddenError(
+        'Under development: Batas fase ini adalah maksimal 1 kolaborator per semesta keluarga. Batalkan undangan tertunda atau nantikan update fase multi-kolaborator dari kami!'
+      );
+    }
+
+    const tree = await this.treeRepository.findById(treeId);
+    if (!tree) {
+      throw new NotFoundError('Pohon silsilah tidak ditemukan.');
+    }
+
+    const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+    const targetUser = await this.userRepository.findByEmail(targetEmail);
+
+    // KASUS 1: Kerabat SUDAH TERDAFTAR di sistem
+    if (targetUser) {
+      const existingRole = await this.treeRepository.getUserRoleInTree(treeId, targetUser.id);
+      if (existingRole) {
+        throw new ConflictError(`Pengguna sudah menjadi anggota pohon ini dengan peran ${existingRole}.`);
+      }
+
+      const memberId = uuidv4();
+      await this.treeRepository.addMember({
+        id: memberId,
+        tree_id: treeId,
+        user_id: targetUser.id,
+        role,
+      });
+
+      // Kirim email notifikasi bahwa ia telah ditambahkan ke semesta
+      if (this.emailService) {
+        this.emailService.sendCollaborationInviteEmail({
+          to: targetUser.email,
+          recipientName: targetUser.nama_lengkap,
+          inviterName: inviter ? inviter.nama_lengkap : 'Admin Utama',
+          treeName: tree.nama_silsilah,
+          role,
+          inviteUrl: appFrontendUrl,
+        }).catch(err => console.error('[TreeService] Gagal kirim email notifikasi:', err.message));
+      }
+
+      return {
+        isPending: false,
+        message: `Berhasil menambahkan ${targetUser.nama_lengkap} sebagai ${role}!`,
+        data: {
+          tree_id: treeId,
+          user_id: targetUser.id,
+          email: targetUser.email,
+          nama_lengkap: targetUser.nama_lengkap,
+          role,
+        },
+      };
+    }
+
+    // KASUS 2: Kerabat BELUM TERDAFTAR di sistem (Organic Growth Loop)
+    if (!this.treeInvitationRepository) {
+      throw new BadRequestError('Layanan undangan kolaborator belum terkonfigurasi.');
+    }
+
+    const existingInvite = await this.treeInvitationRepository.findPendingByTreeAndEmail(treeId, targetEmail);
+    if (existingInvite) {
+      throw new ConflictError(`Undangan untuk email '${targetEmail}' sudah pernah dikirimkan dan masih menunggu pendaftaran kerabat.`);
+    }
+
+    const inviteId = uuidv4();
+    const token = uuidv4().replace(/-/g, '');
+    const newInvite = await this.treeInvitationRepository.create({
+      id: inviteId,
       tree_id: treeId,
-      user_id: targetUser.id,
+      inviter_user_id: currentUserId,
+      email: targetEmail,
       role,
+      token,
     });
 
+    // Kirim email undangan resmi ke kerabat baru
+    if (this.emailService) {
+      const inviteUrl = `${appFrontendUrl}?invite=${token}&email=${encodeURIComponent(targetEmail)}`;
+      this.emailService.sendCollaborationInviteEmail({
+        to: targetEmail,
+        recipientName: targetEmail.split('@')[0],
+        inviterName: inviter ? inviter.nama_lengkap : 'Admin Utama',
+        treeName: tree.nama_silsilah,
+        role,
+        inviteUrl,
+      }).catch(err => console.error('[TreeService] Gagal kirim email undangan baru:', err.message));
+    }
+
     return {
-      tree_id: treeId,
-      user_id: targetUser.id,
-      email: targetUser.email,
-      nama_lengkap: targetUser.nama_lengkap,
-      role,
+      isPending: true,
+      message: `Undangan resmi telah dikirimkan ke ${targetEmail}! Kerabat akan otomatis menjadi ${role} setelah mendaftar akun.`,
+      data: newInvite,
+    };
+  }
+
+  async resendInvitation(treeId, currentUserId, invitationId) {
+    const currentRole = await this.treeRepository.getUserRoleInTree(treeId, currentUserId);
+    if (currentRole !== 'ADMIN_UTAMA') {
+      throw new ForbiddenError('Hanya ADMIN_UTAMA yang dapat mengelola undangan pohon.');
+    }
+
+    if (!this.treeInvitationRepository) {
+      throw new BadRequestError('Layanan undangan kolaborator belum terkonfigurasi.');
+    }
+
+    const invite = await this.treeInvitationRepository.findById(invitationId);
+    if (!invite || invite.tree_id !== treeId || invite.status !== 'PENDING') {
+      throw new NotFoundError('Data undangan tidak ditemukan atau sudah tidak aktif.');
+    }
+
+    const tree = await this.treeRepository.findById(treeId);
+    const inviter = await this.userRepository.findById(currentUserId);
+    const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+    const inviteUrl = `${appFrontendUrl}?invite=${invite.token}&email=${encodeURIComponent(invite.email)}`;
+
+    if (this.emailService) {
+      await this.emailService.sendCollaborationInviteEmail({
+        to: invite.email,
+        recipientName: invite.email.split('@')[0],
+        inviterName: inviter ? inviter.nama_lengkap : 'Admin Utama',
+        treeName: tree ? tree.nama_silsilah : 'Silsilah Keluarga',
+        role: invite.role,
+        inviteUrl,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Email undangan berhasil dikirimkan ulang ke ${invite.email}!`,
+    };
+  }
+
+  async revokeInvitation(treeId, currentUserId, invitationId) {
+    const currentRole = await this.treeRepository.getUserRoleInTree(treeId, currentUserId);
+    if (currentRole !== 'ADMIN_UTAMA') {
+      throw new ForbiddenError('Hanya ADMIN_UTAMA yang dapat mengelola undangan pohon.');
+    }
+
+    if (!this.treeInvitationRepository) {
+      throw new BadRequestError('Layanan undangan kolaborator belum terkonfigurasi.');
+    }
+
+    const invite = await this.treeInvitationRepository.findById(invitationId);
+    if (!invite || invite.tree_id !== treeId) {
+      throw new NotFoundError('Data undangan tidak ditemukan.');
+    }
+
+    await this.treeInvitationRepository.delete(invitationId);
+    return {
+      success: true,
+      message: `Undangan untuk ${invite.email} telah berhasil dibatalkan. Kuota kolaborator telah dibebaskan.`,
     };
   }
 
