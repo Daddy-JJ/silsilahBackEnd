@@ -1,4 +1,4 @@
-﻿# ⚙️ Silsilah Backend API (Node.js 20 LTS + Express + MariaDB)
+# ⚙️ Silsilah Backend API (Node.js 20 LTS + Express + MariaDB)
 
 > REST API Peladen untuk aplikasi Silsilah Keluarga Kolaboratif yang dibangun dengan Clean Architecture, kontrol konkurensi versi data (*Optimistic Locking*), dan pencegahan siklus biologis graf (*Anti-Cycle DAG*).
 
