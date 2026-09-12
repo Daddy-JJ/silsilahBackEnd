@@ -4,6 +4,7 @@ const {
   createUpgradePlanSchema,
   updateUpgradePlanSchema,
   updateSettingsSchema,
+  updateUserRoleSchema,
 } = require('../validations');
 
 function createAdminRoutes(container) {
@@ -37,6 +38,12 @@ function createAdminRoutes(container) {
 
   // 4. Riwayat Transaksi Platform
   router.get('/transactions', adminController.getTransactions);
+
+  // 5. Manajemen Pengguna (User CRUD)
+  router.get('/users', adminController.getAllUsers);
+  router.get('/users/:id', adminController.getUserById);
+  router.put('/users/:id', validateBody(updateUserRoleSchema), adminController.updateUserRole);
+  router.delete('/users/:id', adminController.deleteUser);
 
   return router;
 }

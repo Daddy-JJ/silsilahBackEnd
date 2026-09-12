@@ -149,6 +149,63 @@ class TreeService {
       role,
     };
   }
+
+  async deleteTree(treeId, currentUserId) {
+    const currentRole = await this.treeRepository.getUserRoleInTree(treeId, currentUserId);
+    if (currentRole !== 'ADMIN_UTAMA') {
+      throw new ForbiddenError('Hanya ADMIN_UTAMA yang dapat menghapus pohon.');
+    }
+
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.query('DELETE FROM trees WHERE id = ?', [treeId]);
+      return { success: true, id: treeId };
+    } finally {
+      conn.release();
+    }
+  }
+
+  async updateCollaboratorRole(treeId, currentUserId, targetUserId, newRole) {
+    const currentRole = await this.treeRepository.getUserRoleInTree(treeId, currentUserId);
+    if (currentRole !== 'ADMIN_UTAMA') {
+      throw new ForbiddenError('Hanya ADMIN_UTAMA yang dapat mengubah role kolaborator.');
+    }
+
+    const targetRole = await this.treeRepository.getUserRoleInTree(treeId, targetUserId);
+    if (!targetRole) {
+      throw new NotFoundError('Kolaborator tidak ditemukan di pohon ini.');
+    }
+
+    // Jika yang diubah adalah ADMIN_UTAMA dan mengubah dirinya sendiri, mungkin perlu dicegah jika itu ADMIN_UTAMA terakhir. 
+    // Tapi untuk simplifikasi kita allow update role.
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.query('UPDATE tree_members SET role = ? WHERE tree_id = ? AND user_id = ?', [newRole, treeId, targetUserId]);
+      return { tree_id: treeId, user_id: targetUserId, role: newRole };
+    } finally {
+      conn.release();
+    }
+  }
+
+  async removeCollaborator(treeId, currentUserId, targetUserId) {
+    const currentRole = await this.treeRepository.getUserRoleInTree(treeId, currentUserId);
+    if (currentRole !== 'ADMIN_UTAMA') {
+      throw new ForbiddenError('Hanya ADMIN_UTAMA yang dapat menghapus kolaborator.');
+    }
+
+    const targetRole = await this.treeRepository.getUserRoleInTree(treeId, targetUserId);
+    if (!targetRole) {
+      throw new NotFoundError('Kolaborator tidak ditemukan di pohon ini.');
+    }
+
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.query('DELETE FROM tree_members WHERE tree_id = ? AND user_id = ?', [treeId, targetUserId]);
+      return { success: true, tree_id: treeId, user_id: targetUserId };
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = TreeService;

@@ -1,32 +1,75 @@
 {
   "info": {
-    "name": "Silsilah Keluarga API",
-    "description": "REST API Collection untuk aplikasi Pohon Silsilah Keluarga Kolaboratif.\nBase URL: {{base_url}}\nAuth: Bearer Token (JWT)\n\nCara pakai:\n1. Set variable `base_url` sesuai environment (local/prod)\n2. Jalankan POST /auth/login, copy token ke variable `token`\n3. Semua request otomatis menggunakan Bearer token",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": { "major": 1, "minor": 0, "patch": 0 }
+    "name": "Silsilah Keluarga API (Complete)",
+    "description": "REST API Collection untuk aplikasi Pohon Silsilah Keluarga Kolaboratif (Phase 3).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url", "value": "http://localhost:5000/api/v1", "type": "string" },
-    { "key": "token", "value": "", "type": "string" },
-    { "key": "tree_id", "value": "", "type": "string" },
-    { "key": "member_id", "value": "", "type": "string" },
-    { "key": "marriage_id", "value": "", "type": "string" },
-    { "key": "approval_id", "value": "", "type": "string" }
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tree_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "member_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "plan_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "marriage_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "approval_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "merchant_order_id",
+      "value": "",
+      "type": "string"
+    }
   ],
   "auth": {
     "type": "bearer",
-    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
   },
   "item": [
     {
-      "name": "Health Check",
+      "name": "Health",
       "item": [
         {
-          "name": "GET /health",
+          "name": "Health Check",
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/health",
-            "description": "Cek status server backend"
+            "url": "{{base_url}}/health"
           }
         }
       ]
@@ -35,45 +78,220 @@
       "name": "Auth",
       "item": [
         {
-          "name": "POST /auth/register",
-          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('token', pm.response.json().data?.token || ''); }"], "type": "text/javascript" } }],
+          "name": "Register",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/auth/register",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"nama_lengkap\": \"User Demo\"\n}" },
-            "description": "Registrasi akun baru. Response berisi JWT token."
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"test@test.com\",\"password\":\"password123\",\"nama_lengkap\":\"Tester\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
-          "name": "POST /auth/login",
-          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 200) { pm.collectionVariables.set('token', pm.response.json().data?.token || ''); }"], "type": "text/javascript" } }],
+          "name": "Login",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/auth/login",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@silsilah.app\",\n  \"password\": \"password123\"\n}" },
-            "description": "Login dengan email dan password. Token otomatis tersimpan ke variable `token`."
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"test@test.com\",\"password\":\"password123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
-          "name": "POST /auth/google",
-          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 200) { pm.collectionVariables.set('token', pm.response.json().data?.token || ''); }"], "type": "text/javascript" } }],
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/stats"
+          }
+        },
+        {
+          "name": "Plans - Get All",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/plans"
+          }
+        },
+        {
+          "name": "Plans - Get By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/plans/{{plan_id}}"
+          }
+        },
+        {
+          "name": "Plans - Create",
           "request": {
             "method": "POST",
-            "url": "{{base_url}}/auth/google",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"credential\": \"GOOGLE_ID_TOKEN_DARI_GOOGLE_IDENTITY_SERVICES\"\n}" },
-            "description": "Sign Up / Sign In menggunakan akun Google (1-klik). Otomatis verifikasi dan terdaftar di database."
+            "url": "{{base_url}}/admin/plans",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
-          "name": "GET /auth/me",
+          "name": "Plans - Update",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "url": "{{base_url}}/admin/plans/{{plan_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Plans - Delete",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/plans/{{plan_id}}"
+          }
+        },
+        {
+          "name": "Settings - Get",
+          "request": {
             "method": "GET",
-            "url": "{{base_url}}/auth/me",
-            "description": "Ambil data user yang sedang login"
+            "url": "{{base_url}}/admin/settings"
+          }
+        },
+        {
+          "name": "Settings - Update",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/settings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"default_max_members\":30}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Transactions - Get All",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/transactions"
+          }
+        },
+        {
+          "name": "Users - Get All",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/users"
+          }
+        },
+        {
+          "name": "Users - Get By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/users/{{user_id}}"
+          }
+        },
+        {
+          "name": "Users - Update Role",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/admin/users/{{user_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"system_role\":\"SUPER_ADMIN\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Users - Delete",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/users/{{user_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get Public Plans",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/payments/plans"
+          }
+        },
+        {
+          "name": "Inquiry",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/payments/inquiry",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"treeId\":\"{{tree_id}}\",\"planId\":\"{{plan_id}}\",\"paymentMethod\":\"SP\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Duitku Callback",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/payments/duitku/callback",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
+          }
+        },
+        {
+          "name": "Get Transaction Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/payments/transactions/{{merchant_order_id}}"
           }
         }
       ]
@@ -82,32 +300,107 @@
       "name": "Trees",
       "item": [
         {
-          "name": "GET /trees",
-          "request": { "method": "GET", "url": "{{base_url}}/trees", "description": "Ambil semua pohon silsilah milik user yang login" }
-        },
-        {
-          "name": "POST /trees",
-          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('tree_id', pm.response.json().data?.id || ''); }"], "type": "text/javascript" } }],
+          "name": "Create Tree",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/trees",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nama_silsilah\": \"Bani Demo Test\",\n  \"max_members\": 50\n}" },
-            "description": "Buat pohon silsilah baru. Pembuat otomatis jadi ADMIN_UTAMA."
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nama_silsilah\":\"Keluarga Besar X\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
-          "name": "GET /trees/:treeId",
-          "request": { "method": "GET", "url": "{{base_url}}/trees/{{tree_id}}", "description": "Ambil detail satu pohon" }
+          "name": "Get My Trees",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees"
+          }
         },
         {
-          "name": "POST /trees/:treeId/collaborators",
+          "name": "Get Tree By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}"
+          }
+        },
+        {
+          "name": "Update Tree",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/trees/{{tree_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nama_silsilah\":\"Keluarga Besar Y\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Tree",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/trees/{{tree_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collaborators",
+      "item": [
+        {
+          "name": "Get Collaborators",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}/collaborators"
+          }
+        },
+        {
+          "name": "Add Collaborator",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/trees/{{tree_id}}/collaborators",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"kont1@silsilah.app\",\n  \"role\": \"KONTRIBUTOR\"\n}" },
-            "description": "Undang kolaborator ke pohon. Role: ADMIN_UTAMA | KONTRIBUTOR | VIEWER"
+            "body": {
+              "mode": "raw",
+              "raw": "{\"targetUserEmail\":\"x@y.com\",\"role\":\"KONTRIBUTOR\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Collaborator Role",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/trees/{{tree_id}}/collaborators/{{user_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"role\":\"VIEWER\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Remove Collaborator",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/trees/{{tree_id}}/collaborators/{{user_id}}"
           }
         }
       ]
@@ -116,41 +409,64 @@
       "name": "Family Members",
       "item": [
         {
-          "name": "GET /trees/:treeId/canvas",
-          "request": { "method": "GET", "url": "{{base_url}}/trees/{{tree_id}}/canvas", "description": "Ambil data canvas React Flow {nodes, edges} untuk visualisasi" }
+          "name": "Get Members",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}/members"
+          }
         },
         {
-          "name": "GET /trees/:treeId/members",
-          "request": { "method": "GET", "url": "{{base_url}}/trees/{{tree_id}}/members", "description": "Ambil daftar semua anggota dalam satu pohon" }
+          "name": "Get Canvas",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}/canvas"
+          }
         },
         {
-          "name": "GET /trees/:treeId/members/:memberId",
-          "request": { "method": "GET", "url": "{{base_url}}/trees/{{tree_id}}/members/{{member_id}}", "description": "Ambil detail satu anggota keluarga" }
+          "name": "Get Member By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}/members/{{member_id}}"
+          }
         },
         {
-          "name": "POST /trees/:treeId/members",
-          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('member_id', pm.response.json().data?.id || ''); }"], "type": "text/javascript" } }],
+          "name": "Add Member",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/trees/{{tree_id}}/members",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"nama_lengkap\": \"Anggota Baru\",\n  \"jenis_kelamin\": \"L\",\n  \"tanggal_lahir\": \"1990-01-01\",\n  \"ayah_id\": null,\n  \"ibu_id\": null,\n  \"urutan_anak\": 1\n}" },
-            "description": "Tambah anggota keluarga baru. Hanya ADMIN_UTAMA & KONTRIBUTOR."
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nama_lengkap\":\"Anak 1\",\"jenis_kelamin\":\"L\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
-          "name": "PUT /trees/:treeId/members/:memberId",
+          "name": "Update Member (Direct)",
           "request": {
             "method": "PUT",
             "url": "{{base_url}}/trees/{{tree_id}}/members/{{member_id}}",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"version\": 1,\n  \"patch_data\": {\n    \"nama_lengkap\": \"Nama Diperbarui\",\n    \"tanggal_lahir\": \"1990-06-15\"\n  }\n}" },
-            "description": "Update langsung oleh ADMIN_UTAMA (Optimistic Locking). Field `version` harus sesuai versi terkini."
+            "body": {
+              "mode": "raw",
+              "raw": "{\"version\":1,\"patch_data\":{\"nama_lengkap\":\"Anak 2\"}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
-          "name": "DELETE /trees/:treeId/members/:memberId",
-          "request": { "method": "DELETE", "url": "{{base_url}}/trees/{{tree_id}}/members/{{member_id}}", "description": "Hapus anggota. Hanya ADMIN_UTAMA." }
+          "name": "Delete Member",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/trees/{{tree_id}}/members/{{member_id}}"
+          }
         }
       ]
     },
@@ -158,52 +474,107 @@
       "name": "Marriages",
       "item": [
         {
-          "name": "GET /trees/:treeId/marriages",
-          "request": { "method": "GET", "url": "{{base_url}}/trees/{{tree_id}}/marriages", "description": "Ambil semua relasi pernikahan dalam pohon" }
-        },
-        {
-          "name": "POST /trees/:treeId/marriages",
-          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('marriage_id', pm.response.json().data?.id || ''); }"], "type": "text/javascript" } }],
+          "name": "Get Marriages",
           "request": {
-            "method": "POST",
-            "url": "{{base_url}}/trees/{{tree_id}}/marriages",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"suami_id\": \"{{member_id}}\",\n  \"istri_id\": \"ID_ISTRI_DI_SINI\",\n  \"tanggal_pernikahan\": null\n}" },
-            "description": "Catat relasi pernikahan antara dua anggota. suami_id harus L, istri_id harus P."
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}/marriages"
           }
         },
         {
-          "name": "DELETE /trees/:treeId/marriages/:marriageId",
-          "request": { "method": "DELETE", "url": "{{base_url}}/trees/{{tree_id}}/marriages/{{marriage_id}}", "description": "Hapus relasi pernikahan. Hanya ADMIN_UTAMA & KONTRIBUTOR." }
+          "name": "Add Marriage",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/trees/{{tree_id}}/marriages",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"suami_id\":\"\",\"istri_id\":\"\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Marriage",
+          "request": {
+            "method": "PUT",
+            "url": "{{base_url}}/trees/{{tree_id}}/marriages/{{marriage_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"tanggal_pernikahan\":\"2020-01-01\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Marriage",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/trees/{{tree_id}}/marriages/{{marriage_id}}"
+          }
         }
       ]
     },
     {
-      "name": "Approvals",
+      "name": "Pending Approvals",
       "item": [
         {
-          "name": "GET /trees/:treeId/approvals",
-          "request": { "method": "GET", "url": { "raw": "{{base_url}}/trees/{{tree_id}}/approvals?status=PENDING", "query": [{ "key": "status", "value": "PENDING", "description": "Filter: PENDING | APPROVED | REJECTED" }] }, "description": "Ambil daftar approval. Query param ?status=PENDING|APPROVED|REJECTED" }
-        },
-        {
-          "name": "POST /trees/:treeId/approvals",
-          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 201) { pm.collectionVariables.set('approval_id', pm.response.json().data?.id || ''); }"], "type": "text/javascript" } }],
+          "name": "Propose Change",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/trees/{{tree_id}}/approvals",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"target_member_id\": \"{{member_id}}\",\n  \"target_version\": 1,\n  \"patch_data\": {\n    \"nama_lengkap\": \"Nama Yang Diusulkan\"\n  }\n}" },
-            "description": "Usulkan perubahan data anggota (oleh Kontributor). Perlu disetujui Admin."
+            "body": {
+              "mode": "raw",
+              "raw": "{\"target_member_id\":\"\",\"target_version\":1,\"patch_data\":{}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
-          "name": "POST /trees/:treeId/approvals/:approvalId/resolve",
+          "name": "Get Approvals",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}/approvals"
+          }
+        },
+        {
+          "name": "Get Approval By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/trees/{{tree_id}}/approvals/{{approval_id}}"
+          }
+        },
+        {
+          "name": "Resolve Approval",
           "request": {
             "method": "POST",
             "url": "{{base_url}}/trees/{{tree_id}}/approvals/{{approval_id}}/resolve",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"action\": \"APPROVED\",\n  \"review_notes\": \"Data sudah benar, disetujui.\"\n}" },
-            "description": "Setujui atau tolak usulan. action: APPROVED | REJECTED. Hanya ADMIN_UTAMA."
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"APPROVED\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Approval",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/trees/{{tree_id}}/approvals/{{approval_id}}"
           }
         }
       ]

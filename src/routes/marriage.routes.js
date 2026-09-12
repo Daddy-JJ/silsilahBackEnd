@@ -1,6 +1,6 @@
 const express = require('express');
 const { validateBody } = require('../middlewares/validate.middleware');
-const { addMarriageSchema } = require('../validations');
+const { addMarriageSchema, updateMarriageSchema } = require('../validations');
 
 function createMarriageRoutes({ marriageController, authMiddleware, requireTreeRole }) {
   const router = express.Router();
@@ -17,6 +17,14 @@ function createMarriageRoutes({ marriageController, authMiddleware, requireTreeR
     requireTreeRole(['ADMIN_UTAMA', 'KONTRIBUTOR']),
     validateBody(addMarriageSchema),
     marriageController.addMarriage
+  );
+
+  // Ubah relasi pernikahan (Hanya ADMIN_UTAMA dan KONTRIBUTOR)
+  router.put(
+    '/:treeId/marriages/:marriageId',
+    requireTreeRole(['ADMIN_UTAMA', 'KONTRIBUTOR']),
+    validateBody(updateMarriageSchema),
+    marriageController.updateMarriage
   );
 
   // Hapus relasi pernikahan (Hanya ADMIN_UTAMA dan KONTRIBUTOR)

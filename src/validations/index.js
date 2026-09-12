@@ -109,6 +109,22 @@ const paymentInquirySchema = z.object({
   returnUrl: z.string().url().optional(),
 });
 
+const updateUserRoleSchema = z.object({
+  system_role: z.enum(['USER', 'SUPER_ADMIN'], {
+    errorMap: () => ({ message: 'Role harus USER atau SUPER_ADMIN' }),
+  }),
+});
+
+const updateCollaboratorRoleSchema = z.object({
+  role: z.enum(['ADMIN_UTAMA', 'KONTRIBUTOR', 'VIEWER'], {
+    errorMap: () => ({ message: 'Role harus ADMIN_UTAMA, KONTRIBUTOR, atau VIEWER' }),
+  }),
+});
+
+const updateMarriageSchema = z.object({
+  tanggal_pernikahan: dateSchema.nullable().optional(),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -124,4 +140,7 @@ module.exports = {
   updateUpgradePlanSchema,
   updateSettingsSchema,
   paymentInquirySchema,
+  updateUserRoleSchema,
+  updateCollaboratorRoleSchema,
+  updateMarriageSchema,
 };

@@ -67,6 +67,7 @@ const adminService = new AdminService(
   upgradePlanRepository,
   systemSettingRepository,
   transactionRepository,
+  userRepository,
   pool
 );
 const paymentService = new PaymentService(

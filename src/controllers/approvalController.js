@@ -55,6 +55,20 @@ class ApprovalController {
       next(error);
     }
   };
+
+  deleteApproval = async (req, res, next) => {
+    try {
+      const result = await this.approvalService.deleteApproval(
+        req.params.treeId,
+        req.params.approvalId,
+        req.user.id,
+        req.treeRole
+      );
+      return sendSuccess(res, result, 'Usulan perubahan berhasil dibatalkan/dihapus', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 module.exports = ApprovalController;

@@ -23,6 +23,19 @@ class MarriageController {
     }
   };
 
+  updateMarriage = async (req, res, next) => {
+    try {
+      const result = await this.marriageService.updateMarriage(
+        req.params.treeId,
+        req.params.marriageId,
+        req.body
+      );
+      return sendSuccess(res, result, 'Pernikahan berhasil diperbarui', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   deleteMarriage = async (req, res, next) => {
     try {
       const result = await this.marriageService.deleteMarriage(req.params.treeId, req.params.marriageId);

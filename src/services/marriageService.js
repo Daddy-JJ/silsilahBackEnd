@@ -75,6 +75,24 @@ class MarriageService {
     }
   }
 
+  async updateMarriage(treeId, marriageId, { tanggal_pernikahan }) {
+    const marriage = await this.marriageRepository.findById(marriageId, treeId);
+    if (!marriage) {
+      throw new NotFoundError('Relasi pernikahan tidak ditemukan.');
+    }
+
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.query(
+        'UPDATE marriages SET tanggal_pernikahan = ? WHERE id = ? AND tree_id = ?',
+        [tanggal_pernikahan !== undefined ? tanggal_pernikahan : marriage.tanggal_pernikahan, marriageId, treeId]
+      );
+      return { id: marriageId, tanggal_pernikahan };
+    } finally {
+      conn.release();
+    }
+  }
+
   async deleteMarriage(treeId, marriageId) {
     const marriage = await this.marriageRepository.findById(marriageId, treeId);
     if (!marriage) {

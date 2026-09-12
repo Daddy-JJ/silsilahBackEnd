@@ -180,6 +180,33 @@ class ApprovalService {
       conn.release();
     }
   }
+
+  async deleteApproval(treeId, approvalId, currentUserId, currentUserRole) {
+    const approval = await this.approvalRepository.findById(approvalId);
+    if (!approval) {
+      throw new NotFoundError('Usulan perubahan tidak ditemukan.');
+    }
+    if (approval.tree_id !== treeId) {
+      throw new NotFoundError('Usulan perubahan tidak ditemukan dalam pohon ini.');
+    }
+
+    // Hanya ADMIN_UTAMA atau Proposer (KONTRIBUTOR yang mengusulkan) yang boleh membatalkan
+    if (currentUserRole !== 'ADMIN_UTAMA' && approval.proposed_by_user_id !== currentUserId) {
+      throw new ForbiddenError('Anda tidak memiliki akses untuk menghapus/membatalkan usulan ini.');
+    }
+
+    if (approval.status !== 'PENDING') {
+      throw new BadRequestError('Hanya usulan dengan status PENDING yang dapat dihapus.');
+    }
+
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.query('DELETE FROM pending_approvals WHERE id = ? AND tree_id = ?', [approvalId, treeId]);
+      return { success: true, id: approvalId };
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = ApprovalService;

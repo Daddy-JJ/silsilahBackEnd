@@ -87,6 +87,43 @@ class AdminController {
       next(err);
     }
   };
+
+  getAllUsers = async (req, res, next) => {
+    try {
+      const users = await this.adminService.getAllUsers();
+      return sendSuccess(res, users, 'Daftar pengguna berhasil diambil');
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  getUserById = async (req, res, next) => {
+    try {
+      const user = await this.adminService.getUserById(req.params.id);
+      return sendSuccess(res, user, 'Detail pengguna berhasil diambil');
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  updateUserRole = async (req, res, next) => {
+    try {
+      const { system_role } = req.body;
+      const result = await this.adminService.updateUserRole(req.params.id, system_role);
+      return sendSuccess(res, result, 'Role pengguna berhasil diperbarui');
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  deleteUser = async (req, res, next) => {
+    try {
+      const result = await this.adminService.deleteUser(req.params.id);
+      return sendSuccess(res, result, 'Pengguna berhasil dihapus');
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 module.exports = AdminController;

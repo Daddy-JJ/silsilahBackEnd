@@ -47,6 +47,14 @@ function createApprovalRoutes({
     approvalController.resolve
   );
 
+  // Batalkan/hapus usulan perubahan (Hanya ADMIN_UTAMA atau pembuat usulan)
+  router.delete(
+    '/:treeId/approvals/:approvalId',
+    authMiddleware,
+    requireTreeRole(['ADMIN_UTAMA', 'KONTRIBUTOR']),
+    approvalController.deleteApproval
+  );
+
   return router;
 }
 

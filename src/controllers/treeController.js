@@ -66,6 +66,43 @@ class TreeController {
       next(error);
     }
   };
+
+  deleteTree = async (req, res, next) => {
+    try {
+      const result = await this.treeService.deleteTree(req.params.treeId, req.user.id);
+      return sendSuccess(res, result, 'Semesta pohon keluarga berhasil dihapus', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateCollaboratorRole = async (req, res, next) => {
+    try {
+      const { role } = req.body;
+      const result = await this.treeService.updateCollaboratorRole(
+        req.params.treeId,
+        req.user.id,
+        req.params.userId,
+        role
+      );
+      return sendSuccess(res, result, 'Role kolaborator berhasil diperbarui', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  removeCollaborator = async (req, res, next) => {
+    try {
+      const result = await this.treeService.removeCollaborator(
+        req.params.treeId,
+        req.user.id,
+        req.params.userId
+      );
+      return sendSuccess(res, result, 'Kolaborator berhasil dihapus dari pohon', 200);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 module.exports = TreeController;

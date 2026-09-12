@@ -1,6 +1,6 @@
 const express = require('express');
 const { validateBody } = require('../middlewares/validate.middleware');
-const { createTreeSchema, addTreeMemberSchema, updateTreeSchema } = require('../validations');
+const { createTreeSchema, addTreeMemberSchema, updateTreeSchema, updateCollaboratorRoleSchema } = require('../validations');
 
 function createTreeRoutes({ treeController, authMiddleware, requireTreeRole }) {
   const router = express.Router();
@@ -23,6 +23,14 @@ function createTreeRoutes({ treeController, authMiddleware, requireTreeRole }) {
     treeController.updateTree
   );
 
+  // Hapus semesta pohon (Hanya ADMIN_UTAMA)
+  router.delete(
+    '/:treeId',
+    authMiddleware,
+    requireTreeRole(['ADMIN_UTAMA']),
+    treeController.deleteTree
+  );
+
   // Ambil daftar kolaborator pohon
   router.get(
     '/:treeId/collaborators',
@@ -38,6 +46,23 @@ function createTreeRoutes({ treeController, authMiddleware, requireTreeRole }) {
     requireTreeRole(['ADMIN_UTAMA']),
     validateBody(addTreeMemberSchema),
     treeController.addTreeMember
+  );
+
+  // Ubah role kolaborator (Hanya ADMIN_UTAMA)
+  router.put(
+    '/:treeId/collaborators/:userId',
+    authMiddleware,
+    requireTreeRole(['ADMIN_UTAMA']),
+    validateBody(updateCollaboratorRoleSchema),
+    treeController.updateCollaboratorRole
+  );
+
+  // Hapus kolaborator (Hanya ADMIN_UTAMA)
+  router.delete(
+    '/:treeId/collaborators/:userId',
+    authMiddleware,
+    requireTreeRole(['ADMIN_UTAMA']),
+    treeController.removeCollaborator
   );
 
   return router;

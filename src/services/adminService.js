@@ -2,10 +2,11 @@ const { v4: uuidv4 } = require('uuid');
 const { NotFoundError, BadRequestError, ConflictError } = require('../errors/AppError');
 
 class AdminService {
-  constructor(upgradePlanRepository, systemSettingRepository, transactionRepository, pool) {
+  constructor(upgradePlanRepository, systemSettingRepository, transactionRepository, userRepository, pool) {
     this.upgradePlanRepository = upgradePlanRepository;
     this.systemSettingRepository = systemSettingRepository;
     this.transactionRepository = transactionRepository;
+    this.userRepository = userRepository;
     this.pool = pool;
   }
 
@@ -120,6 +121,54 @@ class AdminService {
 
   async getTransactions(limit = 50, offset = 0) {
     return this.transactionRepository.findAll(Number(limit), Number(offset));
+  }
+
+  // --- Users CRUD ---
+  async getAllUsers() {
+    const conn = await this.pool.getConnection();
+    try {
+      const [rows] = await conn.query('SELECT id, email, nama_lengkap, auth_provider, is_verified, system_role, created_at FROM users ORDER BY created_at DESC');
+      return rows;
+    } finally {
+      conn.release();
+    }
+  }
+
+  async getUserById(id) {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundError('User tidak ditemukan.');
+    }
+    const { password_hash, ...safeUser } = user;
+    return safeUser;
+  }
+
+  async updateUserRole(id, role) {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundError('User tidak ditemukan.');
+    }
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.query('UPDATE users SET system_role = ? WHERE id = ?', [role, id]);
+      return { id, system_role: role };
+    } finally {
+      conn.release();
+    }
+  }
+
+  async deleteUser(id) {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundError('User tidak ditemukan.');
+    }
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.query('DELETE FROM users WHERE id = ?', [id]);
+      return { success: true, id };
+    } finally {
+      conn.release();
+    }
   }
 }
 
