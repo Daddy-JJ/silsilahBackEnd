@@ -137,7 +137,7 @@ DB_PASS=PasswordKuatDatabase123!
 DB_NAME=karj9582_silsilah
 JWT_SECRET=super_secret_key_minimum_32_characters_random_string
 JWT_EXPIRES_IN=7d
-FRONTEND_URL=https://silsilahkeluarga.id,https://silsilahkeluarga-mu.vercel.app,http://localhost:3000
+FRONTEND_URL=https://silsilahkeluarga.id,http://localhost:3000,http://localhost:3001
 LOG_LEVEL=info
 
 # SMTP Email Resmi

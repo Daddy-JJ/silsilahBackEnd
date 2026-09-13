@@ -10,9 +10,9 @@ module.exports = {
   brand: {
     name: 'Silsilah Keluarga',
     tagline: 'Collaborative Tree Platform',
-    websiteUrl: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0] : 'https://silsilahkeluarga.id',
-    supportEmail: 'silsilahkeluarga@kartunamadigital.id',
-    footerCopyright: `© ${new Date().getFullYear()} Silsilah Keluarga by kartunamadigital.id. Seluruh hak cipta dilindungi.`,
+    websiteUrl: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id',
+    supportEmail: process.env.SMTP_FROM_EMAIL || 'admin@silsilahkeluarga.id',
+    footerCopyright: `© ${new Date().getFullYear()} Silsilah Keluarga (silsilahkeluarga.id). Seluruh hak cipta dilindungi.`,
     footerDisclaimer: 'Anda menerima email ini karena akun Anda terdaftar di platform Silsilah Keluarga. Jika ini bukan Anda, silakan hubungi tim dukungan kami.',
   },
 

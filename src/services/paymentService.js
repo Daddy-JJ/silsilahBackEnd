@@ -89,9 +89,10 @@ class PaymentService {
       process.env.BACKEND_CALLBACK_URL ||
       'http://localhost:5000/api/v1/payments/duitku/callback';
 
+    const defaultFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id';
     const defaultReturnUrl =
       returnUrl ||
-      `${process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'http://localhost:3001'}/trees/${treeId}?payment=finish`;
+      `${defaultFrontendUrl}/trees/${treeId}?payment=finish`;
 
     const inquiryPayload = {
       paymentAmount: finalAmount,
