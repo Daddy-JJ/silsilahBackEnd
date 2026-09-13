@@ -4,6 +4,37 @@ Semua perubahan penting pada proyek **Silsilah Keluarga Kolaboratif** didokument
 
 ---
 
+## [3.0.0] - 2026-09-14 — *Full Production Release & Shared Hosting Hardening*
+
+### Ditambahkan (Added)
+- **Endpoint Diagnostik SMTP** (`GET /api/v1/health/smtp`): verifikasi handshake Nodemailer + test kirim email nyata via query param `?send_to=email@...`.
+- **`src/utils/urlHelper.js`** — helper `getFrontendUrl()` untuk selalu menggunakan domain resmi `https://silsilahkeluarga.id` dan memblokir URL sementara (Vercel/localhost) dari semua email keluar.
+- **Google OAuth Multi-Tier Verification** (commit `24c4211`): mekanisme verifikasi token Google berlapis tiga dengan DNS `ipv4first` untuk kompatibilitas cPanel Node.js 22.
+- **`/api/v1/health`** — field `frontendUrl` aktif sebagai verifikasi cepat konfigurasi domain.
+- **Phase 3 Complete CRUD APIs** — 14 endpoint baru: Users CRUD (Admin), Tree Delete, Collaborator Update/Delete, Marriage Update, Approval Delete, dengan validasi Zod.
+- **Endpoint Pengguna Terpadu** (Auth): `PUT /auth/profile`, `PUT /auth/change-password`, `GET /auth/my-invitations`.
+- **Forgot Password Flow**: `POST /auth/forgot-password` + `POST /auth/reset-password` dengan tabel `password_resets` dan email reset bertautan ke domain resmi.
+- **Fitur Undangan Kolaborator Organik**: resend & revoke invitation. Auto-claim pending invitations saat pengguna baru mendaftar.
+- **`scripts/generate_postman.js`**: auto-generator koleksi Postman dari definisi route.
+- **`.htaccess` Passenger tuning**: `PassengerMaxInstances 1`, `PassengerPoolIdleTime 300`, `PassengerMaxRequests 1000` untuk shared hosting dengan NPROC limit 40/40.
+
+### Diubah (Changed)
+- **`src/server.js`**: `UV_THREADPOOL_SIZE=2` diset di baris pertama sebelum semua `require`. Tambah `dns.setDefaultResultOrder('ipv4first')` untuk DNS outbound di cPanel Node.js 22.
+- **`src/config/database.js`**: `connectionLimit` dinamis (default 2 di production), `queueLimit: 50`, `connectTimeout: 10000`, `enableKeepAlive: true`, dual password fallback.
+- **`src/services/emailService.js`**: `pool: false` mencegah dead socket timeout. Default config ke `mail.silsilahkeluarga.id:465`. `verifyConnection()` kini tampilkan detail config SMTP aktif.
+- **`src/config/emailContent.js`**: brand `websiteUrl`, `supportEmail`, `footerCopyright` kini dinamis dari env vars.
+- **`src/services/authService.js`** & **`treeService.js`**: gunakan `getFrontendUrl()` di semua konstruksi URL untuk email.
+- **`src/services/paymentService.js`**: `defaultReturnUrl` fallback ke `https://silsilahkeluarga.id`. `phoneNumber` diambil dari `user.phone_number` (bukan hardcoded).
+- **`package.json`**: versi `3.0.0`, deskripsi diperbarui ke Phase 3 Production.
+- **`.env.example`**: penambahan semua variabel SMTP, tuning resource, dan `BACKEND_CALLBACK_URL`.
+
+### Diperbaiki (Fixed)
+- URL email yang tersasar ke domain Vercel — diperbaiki permanen via `getFrontendUrl()`.
+- Startup database connection check dibungkus `finally { connection.release() }`.
+- Email reset password yang masih mengarah ke URL Vercel lama.
+
+---
+
 ## [2.0.0] - 2026-09-09 — *Production Release & Cloud Architecture*
 
 ### Ditambahkan (Added)

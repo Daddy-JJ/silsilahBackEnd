@@ -1,0 +1,12 @@
+# Phusion Passenger Configuration — Silsilah Keluarga Backend
+# Membatasi worker instances agar tidak melebihi kuota NPROC 40/40 shared hosting
+
+# Hanya jalankan 1 instance worker (cegah spawn ganda yang menghabiskan proses)
+PassengerMaxInstances 1
+PassengerMinInstances 1
+
+# Matikan proses idle setelah 5 menit (hemat RAM & proses saat tidak ada request)
+PassengerPoolIdleTime 300
+
+# Max request sebelum worker di-restart (mitigasi memory leak jangka panjang)
+PassengerMaxRequests 1000

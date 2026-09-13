@@ -103,7 +103,7 @@ class PaymentService {
       merchantUserInfo: user.id,
       customerVaName: user.nama_lengkap || 'Pengguna Silsilah',
       email: user.email,
-      phoneNumber: '08123456789',
+      phoneNumber: user.phone_number || '',
       callbackUrl: backendCallbackUrl,
       returnUrl: defaultReturnUrl,
       signature,

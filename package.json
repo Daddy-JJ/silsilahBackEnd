@@ -1,7 +1,7 @@
 {
   "name": "silsilah-backend",
-  "version": "1.0.0",
-  "description": "Backend Collaborative Family Tree (Phase 1 Sandbox)",
+  "version": "3.0.0",
+  "description": "Backend Collaborative Family Tree — Phase 3 Production (CRUD Lengkap, Email, Monetisasi)",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
