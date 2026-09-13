@@ -1,3 +1,9 @@
+// Utamakan rute IPv4 untuk DNS lookup (mencegah timeout koneksi outbound ke Google/SMTP di cPanel Node 22)
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 // Batasi threadpool libuv untuk meminimalkan jumlah OS threads di shared hosting (NPROC limit 40/40)
 process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '2';
 
