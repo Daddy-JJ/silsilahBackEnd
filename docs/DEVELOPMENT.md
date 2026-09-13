@@ -1,4 +1,4 @@
-﻿# 🛠️ Dokumentasi Pengembangan (Development & Architecture Guide)
+# 🛠️ Dokumentasi Pengembangan (Development & Architecture Guide)
 
 > **Proyek:** Silsilah Keluarga Kolaboratif  
 > **Versi:** 2.0.0 (Production Ready)  
@@ -120,14 +120,16 @@ Mencegah paradoks biologis silsilah (anak menjadi leluhur dari dirinya sendiri):
 ### Environment Frontend (`.env`)
 ```bash
 # Biarkan kosong pada localhost (otomatis memanfaatkan Vite Proxy port 5000)
-# Diisi pada dashboard Vercel:
-VITE_API_BASE_URL=https://api.domain-anda.com/api/v1
+# Diisi pada dashboard Vercel Project Settings:
+VITE_API_BASE_URL=https://apisilsilah.kartunamadigital.id/api/v1
 ```
 
-### Environment Backend (`.env`)
+### Environment Backend (`.env` cPanel Node.js App)
 ```bash
 PORT=5000
 NODE_ENV=production
+# Application Root: public_html/apisilsilah.kartunamadigital.id
+# Application URL: apisilsilah.kartunamadigital.id
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=karj9582_silsilah_user
@@ -135,8 +137,17 @@ DB_PASS=PasswordKuatDatabase123!
 DB_NAME=karj9582_silsilah
 JWT_SECRET=super_secret_key_minimum_32_characters_random_string
 JWT_EXPIRES_IN=7d
-FRONTEND_URL=https://silsilah-keluarga.vercel.app,http://localhost:3000
+FRONTEND_URL=https://silsilahkeluarga.id,https://silsilahkeluarga-mu.vercel.app,http://localhost:3000
 LOG_LEVEL=info
+
+# SMTP Email Resmi
+SMTP_HOST=localhost
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=admin@silsilahkeluarga.id
+SMTP_PASS=(password_email_cpanel)
+SMTP_FROM_NAME=SilsilahKeluarga.id
+SMTP_FROM_EMAIL=admin@silsilahkeluarga.id
 ```
 
 ---
