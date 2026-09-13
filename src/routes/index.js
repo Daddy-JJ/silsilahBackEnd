@@ -19,6 +19,39 @@ function createApiRouter(container) {
     });
   });
 
+  // SMTP Diagnostic & Handshake test endpoint: /api/v1/health/smtp (?send_to=your@email.com)
+  router.get('/health/smtp', async (req, res) => {
+    try {
+      const { send_to } = req.query;
+      const verifyResult = await container.emailService.verifyConnection();
+
+      if (!verifyResult.success) {
+        return res.status(500).json(verifyResult);
+      }
+
+      // Jika user menambahkan ?send_to=email@gmail.com, kirim email uji coba nyata
+      if (send_to) {
+        const sendResult = await container.emailService.sendTestEmail(send_to);
+        return res.status(200).json({
+          ...verifyResult,
+          testEmail: {
+            delivered: true,
+            recipient: send_to,
+            messageId: sendResult.messageId,
+          },
+        });
+      }
+
+      return res.status(200).json(verifyResult);
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: `Error saat pengujian SMTP: ${err.message}`,
+        error: err.message,
+      });
+    }
+  });
+
   // Admin routes: /api/v1/admin
   router.use('/admin', createAdminRoutes(container));
 

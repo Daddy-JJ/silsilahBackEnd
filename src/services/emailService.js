@@ -11,13 +11,13 @@ const { renderBaseEmail } = require('../templates/email/baseLayout');
 
 class EmailService {
   constructor() {
-    this.host = process.env.SMTP_HOST || 'mail.kartunamadigital.id';
+    this.host = process.env.SMTP_HOST || 'mail.silsilahkeluarga.id';
     this.port = Number(process.env.SMTP_PORT) || 465;
     this.secure = process.env.SMTP_SECURE === 'true' || this.port === 465;
-    this.user = process.env.SMTP_USER || 'silsilahkeluarga@kartunamadigital.id';
+    this.user = process.env.SMTP_USER || 'admin@silsilahkeluarga.id';
     this.pass = process.env.SMTP_PASS || '';
-    this.fromName = process.env.SMTP_FROM_NAME || 'Silsilah Keluarga';
-    this.fromEmail = process.env.SMTP_FROM_EMAIL || 'silsilahkeluarga@kartunamadigital.id';
+    this.fromName = process.env.SMTP_FROM_NAME || 'SilsilahKeluarga.id';
+    this.fromEmail = process.env.SMTP_FROM_EMAIL || 'admin@silsilahkeluarga.id';
 
     this.transporter = null;
     this._initTransporter();
@@ -35,20 +35,37 @@ class EmailService {
       tls: {
         rejectUnauthorized: false, // Menjamin kompatibilitas sertifikat SSL shared hosting
       },
-      pool: true,
-      maxConnections: 3,
-      maxMessages: 50,
+      // Nonaktifkan pool persisten di shared hosting agar tidak terkena timeout soket mati
+      pool: false,
     });
   }
 
   /**
-   * Verifikasi handshake koneksi SMTP server
+   * Verifikasi handshake koneksi SMTP server beserta detail diagnostik
    */
   async verifyConnection() {
+    // Sinkronisasi ulang variabel runtime
+    this.host = process.env.SMTP_HOST || 'mail.silsilahkeluarga.id';
+    this.port = Number(process.env.SMTP_PORT) || 465;
+    this.secure = process.env.SMTP_SECURE === 'true' || this.port === 465;
+    this.user = process.env.SMTP_USER || 'admin@silsilahkeluarga.id';
+    this.pass = process.env.SMTP_PASS || '';
+    this.fromName = process.env.SMTP_FROM_NAME || 'SilsilahKeluarga.id';
+    this.fromEmail = process.env.SMTP_FROM_EMAIL || 'admin@silsilahkeluarga.id';
+    this._initTransporter();
+
     if (!this.pass) {
       return {
         success: false,
-        message: 'SMTP_PASS belum diisi di berkas .env. Pengiriman email saat ini disimulasikan di terminal.',
+        message: 'SMTP_PASS belum terisi atau belum terbaca oleh proses Node.js. Pastikan Anda sudah menyimpan variabel di cPanel dan mengklik tombol RESTART.',
+        config: {
+          host: this.host,
+          port: this.port,
+          secure: this.secure,
+          user: this.user,
+          fromEmail: this.fromEmail,
+          passConfigured: false,
+        },
       };
     }
 
@@ -57,14 +74,56 @@ class EmailService {
       return {
         success: true,
         message: `Koneksi SMTP ke ${this.host}:${this.port} berhasil terverifikasi.`,
+        config: {
+          host: this.host,
+          port: this.port,
+          secure: this.secure,
+          user: this.user,
+          fromEmail: this.fromEmail,
+          passConfigured: true,
+        },
       };
     } catch (err) {
       return {
         success: false,
         message: `Gagal terhubung ke SMTP ${this.host}:${this.port}: ${err.message}`,
-        error: err,
+        error: err.message,
+        code: err.code || null,
+        config: {
+          host: this.host,
+          port: this.port,
+          secure: this.secure,
+          user: this.user,
+          fromEmail: this.fromEmail,
+          passConfigured: true,
+        },
       };
     }
+  }
+
+  /**
+   * Kirim email uji coba untuk memverifikasi penerimaan pesan nyata di inbox
+   */
+  async sendTestEmail(toEmail) {
+    return this.sendMail({
+      to: toEmail,
+      subject: 'Tes Pengiriman Email SilsilahKeluarga.id',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <h2 style="color: #2b6cb0;">Email Tes Berhasil Terkirim! 🎉</h2>
+          <p>Halo,</p>
+          <p>Jika Anda membaca email ini, berarti integrasi SMTP backend <strong>SilsilahKeluarga.id</strong> di shared hosting Anda telah berjalan 100% normal dan siap melayani:</p>
+          <ul>
+            <li>Tautan Reset / Pemulihan Kata Sandi</li>
+            <li>Undangan Kolaborator Pohon Keluarga</li>
+            <li>Notifikasi Sistem Lainnya</li>
+          </ul>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #888;">Dikirim pada: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</p>
+        </div>
+      `,
+      text: 'Halo! Ini adalah email tes pengujian koneksi SMTP dari backend SilsilahKeluarga.id.',
+    });
   }
 
   /**
