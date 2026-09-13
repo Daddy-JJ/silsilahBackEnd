@@ -6,6 +6,7 @@ const createApprovalRoutes = require('./approval.routes');
 const createMarriageRoutes = require('./marriage.routes');
 const createAdminRoutes = require('./admin.routes');
 const createPaymentRoutes = require('./payment.routes');
+const { getFrontendUrl } = require('../utils/urlHelper');
 
 function createApiRouter(container) {
   const router = express.Router();
@@ -15,6 +16,7 @@ function createApiRouter(container) {
     res.status(200).json({
       success: true,
       message: 'Silsilah Keluarga Backend Service is healthy',
+      frontendUrl: getFrontendUrl(),
       timestamp: new Date().toISOString(),
     });
   });

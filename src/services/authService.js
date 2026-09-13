@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { OAuth2Client } = require('google-auth-library');
 const { BadRequestError, UnauthorizedError, NotFoundError } = require('../errors/AppError');
+const { getFrontendUrl } = require('../utils/urlHelper');
 
 class AuthService {
   constructor(
@@ -49,7 +50,7 @@ class AuthService {
 
     // Kirim email selamat datang via email resmi
     if (this.emailService) {
-      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id';
+      const appFrontendUrl = getFrontendUrl();
       this.emailService.sendWelcomeEmail({
         to: newUser.email,
         name: newUser.nama_lengkap,
@@ -216,7 +217,7 @@ class AuthService {
 
     // Kirim email resmi pemulihan kata sandi
     if (this.emailService) {
-      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id';
+      const appFrontendUrl = getFrontendUrl();
       const resetUrl = `${appFrontendUrl}?reset_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
       this.emailService.sendPasswordResetEmail({
