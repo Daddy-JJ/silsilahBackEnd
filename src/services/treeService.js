@@ -150,7 +150,7 @@ class TreeService {
       throw new NotFoundError('Pohon silsilah tidak ditemukan.');
     }
 
-    const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+    const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id';
     const targetUser = await this.userRepository.findByEmail(targetEmail);
 
     // KASUS 1: Kerabat SUDAH TERDAFTAR di sistem
@@ -270,7 +270,7 @@ class TreeService {
 
     const tree = await this.treeRepository.findById(treeId);
     const inviter = await this.userRepository.findById(currentUserId);
-    const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+    const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id';
     const inviteUrl = `${appFrontendUrl}?invite=${invite.token}&email=${encodeURIComponent(invite.email)}`;
 
     if (this.emailService) {

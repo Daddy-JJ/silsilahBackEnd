@@ -49,7 +49,7 @@ class AuthService {
 
     // Kirim email selamat datang via email resmi
     if (this.emailService) {
-      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id';
       this.emailService.sendWelcomeEmail({
         to: newUser.email,
         name: newUser.nama_lengkap,
@@ -216,7 +216,7 @@ class AuthService {
 
     // Kirim email resmi pemulihan kata sandi
     if (this.emailService) {
-      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga-mu.vercel.app';
+      const appFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : 'https://silsilahkeluarga.id';
       const resetUrl = `${appFrontendUrl}?reset_token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
       this.emailService.sendPasswordResetEmail({
