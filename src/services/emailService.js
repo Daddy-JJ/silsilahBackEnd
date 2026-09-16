@@ -129,7 +129,7 @@ class EmailService {
   /**
    * Metode internal untuk mengirim email
    */
-  async sendMail({ to, subject, html, text }) {
+  async sendMail({ to, subject, html, text, replyTo }) {
     if (!to) {
       throw new Error('[EmailService] Alamat tujuan email (to) wajib diisi.');
     }
@@ -140,10 +140,11 @@ class EmailService {
       console.log(`📧 [EMAIL SIMULATED / DRY-RUN]`);
       console.log(`Kepada  : ${to}`);
       console.log(`Pengirim: "${this.fromName}" <${this.fromEmail}>`);
+      if (replyTo) console.log(`Reply-To: ${replyTo}`);
       console.log(`Subjek  : ${subject}`);
       console.log(`Catatan : Masukkan SMTP_PASS di .env untuk mengirim email riil.`);
       console.log(`=============================================================\n`);
-      return { success: true, simulated: true, to, subject };
+      return { success: true, simulated: true, to, subject, replyTo };
     }
 
     const mailOptions = {
@@ -152,6 +153,7 @@ class EmailService {
       subject,
       text: text || subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     };
 
     try {
@@ -557,6 +559,90 @@ class EmailService {
       to,
       subject: cfg.subject(treeName),
       html,
+    });
+  }
+
+  // ─── 7. TEMPLATE: NOTIFIKASI FEEDBACK / MASUKAN PENGGUNA ────────────
+  async sendFeedbackNotificationEmail({ user, category, message }) {
+    const toEmail = process.env.SUPPORT_EMAIL || 'support@silsilahkeluarga.id';
+    const userName = user.nama_lengkap || 'Pengguna Silsilah';
+    const userEmail = user.email;
+    const dateStr = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+    const contentHtml = `
+      <p style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: #18181b;">
+        Masukan Baru dari Pengguna
+      </p>
+      <p style="margin: 0 0 16px 0; color: #52525b; line-height: 1.5;">
+        Pengguna platform telah mengirimkan feedback/masukan baru melalui formulir aplikasi:
+      </p>
+
+      <!-- Feedback Details Table -->
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fafafa; border: 1px solid #e4e4e7; border-radius: 8px; margin: 20px 0; font-size: 13px;">
+        <tr>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #f4f4f5; color: #71717a; width: 30%;">
+            Nama Pengguna
+          </td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #f4f4f5; font-weight: 700; color: #18181b;">
+            ${userName}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #f4f4f5; color: #71717a;">
+            Email Pengguna
+          </td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #f4f4f5; color: #18181b;">
+            <a href="mailto:${userEmail}" style="color: #2563eb; text-decoration: none;">${userEmail}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #f4f4f5; color: #71717a;">
+            Kategori
+          </td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid #f4f4f5;">
+            <span style="display: inline-block; background-color: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">
+              ${category}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 16px; color: #71717a;">
+            Waktu Pengiriman
+          </td>
+          <td style="padding: 12px 16px; color: #52525b;">
+            ${dateStr} WIB
+          </td>
+        </tr>
+      </table>
+
+      <!-- Message Quote Box -->
+      <div style="background-color: #f4f4f5; border-left: 4px solid #18181b; border-radius: 4px; padding: 16px 20px; margin: 20px 0;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #71717a; margin-bottom: 8px;">
+          Isi Pesan Masukan:
+        </div>
+        <div style="font-size: 14px; color: #18181b; line-height: 1.6; white-space: pre-wrap;">
+${message}
+        </div>
+      </div>
+
+      <p style="font-size: 12px; color: #71717a; margin: 20px 0 0 0;">
+        💡 <em>Anda dapat langsung menekan tombol <strong>Reply</strong> pada aplikasi email Anda untuk membalas pesan ini langsung ke ${userEmail}.</em>
+      </p>
+    `;
+
+    const html = renderBaseEmail({
+      badge: 'FEEDBACK PENGGUNA',
+      title: `Masukan Baru: ${category}`,
+      contentHtml,
+      closingHtml: 'Sistem Notifikasi SilsilahKeluarga.id',
+    });
+
+    return this.sendMail({
+      to: toEmail,
+      subject: `[Feedback Silsilah] [${category}] dari ${userName}`,
+      replyTo: userEmail,
+      html,
+      text: `Feedback dari ${userName} (${userEmail}) - Kategori: ${category}\n\nPesan:\n${message}`,
     });
   }
 }

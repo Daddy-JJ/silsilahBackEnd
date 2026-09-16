@@ -11,6 +11,7 @@ const SystemSettingRepository = require('./repositories/systemSettingRepository'
 const TransactionRepository = require('./repositories/transactionRepository');
 const TreeInvitationRepository = require('./repositories/treeInvitationRepository');
 const PasswordResetRepository = require('./repositories/passwordResetRepository');
+const FeedbackRepository = require('./repositories/feedbackRepository');
 
 // Services
 const AuthService = require('./services/authService');
@@ -21,6 +22,7 @@ const MarriageService = require('./services/marriageService');
 const AdminService = require('./services/adminService');
 const PaymentService = require('./services/paymentService');
 const EmailService = require('./services/emailService');
+const FeedbackService = require('./services/feedbackService');
 
 // Controllers
 const AuthController = require('./controllers/authController');
@@ -30,6 +32,7 @@ const ApprovalController = require('./controllers/approvalController');
 const MarriageController = require('./controllers/marriageController');
 const AdminController = require('./controllers/adminController');
 const PaymentController = require('./controllers/paymentController');
+const FeedbackController = require('./controllers/feedbackController');
 
 // Middlewares
 const createAuthMiddleware = require('./middlewares/auth.middleware');
@@ -51,6 +54,7 @@ const systemSettingRepository = new SystemSettingRepository(pool);
 const transactionRepository = new TransactionRepository(pool);
 const treeInvitationRepository = new TreeInvitationRepository(pool);
 const passwordResetRepository = new PasswordResetRepository(pool);
+const feedbackRepository = new FeedbackRepository(pool);
 
 // 2. Lapisan Services
 const emailService = new EmailService();
@@ -99,6 +103,7 @@ const paymentService = new PaymentService(
   pool,
   emailService
 );
+const feedbackService = new FeedbackService(feedbackRepository, emailService);
 
 // 3. Lapisan Controllers
 const authController = new AuthController(authService);
@@ -108,6 +113,7 @@ const approvalController = new ApprovalController(approvalService);
 const marriageController = new MarriageController(marriageService);
 const adminController = new AdminController(adminService);
 const paymentController = new PaymentController(paymentService);
+const feedbackController = new FeedbackController(feedbackService);
 
 // 4. Middlewares
 const authMiddleware = createAuthMiddleware(jwtSecret);
@@ -125,6 +131,7 @@ module.exports = {
   systemSettingRepository,
   transactionRepository,
   treeInvitationRepository,
+  feedbackRepository,
   // Services
   authService,
   treeService,
@@ -134,6 +141,7 @@ module.exports = {
   adminService,
   paymentService,
   emailService,
+  feedbackService,
   // Controllers
   authController,
   treeController,
@@ -142,6 +150,7 @@ module.exports = {
   marriageController,
   adminController,
   paymentController,
+  feedbackController,
   // Middlewares
   authMiddleware,
   requireTreeRole,

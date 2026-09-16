@@ -31,6 +31,9 @@ CREATE TABLE trees (
     nama_silsilah VARCHAR(100) NOT NULL,
     created_by_user_id VARCHAR(36) NOT NULL,
     max_members INT DEFAULT 30,
+    membership_plan VARCHAR(50) NOT NULL DEFAULT 'FREE',
+    membership_expires_at DATETIME NULL,
+    membership_status ENUM('ACTIVE', 'EXPIRED', 'LIFETIME') NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -177,4 +180,17 @@ CREATE TABLE IF NOT EXISTS password_resets (
     INDEX idx_email_token (email, token),
     INDEX idx_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabel Masukan & Saran Pengguna (User Feedback)
+CREATE TABLE IF NOT EXISTS user_feedbacks (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_feedbacks_user (user_id),
+    INDEX idx_feedbacks_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 

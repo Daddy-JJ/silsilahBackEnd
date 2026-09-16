@@ -64,7 +64,10 @@ class TreeRepository {
   async getTreesForUser(userId, conn = null) {
     // Multi-Universe: ambil semua pohon yang diikuti pengguna beserta perannya
     const sql = `
-      SELECT t.id, t.nama_silsilah, t.created_by_user_id, t.max_members, t.created_at, tm.role
+      SELECT 
+        t.id, t.nama_silsilah, t.created_by_user_id, t.max_members, 
+        t.membership_plan, t.membership_expires_at, t.membership_status,
+        t.created_at, tm.role
       FROM trees t
       INNER JOIN tree_members tm ON t.id = tm.tree_id
       WHERE tm.user_id = ?

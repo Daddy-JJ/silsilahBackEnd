@@ -63,6 +63,7 @@ class TransactionRepository {
         t.*, 
         u.email as user_email, 
         u.nama_lengkap as user_nama, 
+        p.kode_paket,
         p.nama_paket, 
         p.target_max_members, 
         tr.nama_silsilah

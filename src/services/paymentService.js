@@ -315,12 +315,24 @@ class PaymentService {
         if (targetMaxMembers) {
           // Set kuota ke target baru (atau nilai tertinggi jika sudah lebih besar)
           newMaxMembers = Math.max(currentTree.max_members, targetMaxMembers);
-
-          await conn.query('UPDATE trees SET max_members = ? WHERE id = ?', [
-            newMaxMembers,
-            tx.tree_id,
-          ]);
         }
+
+        const membershipPlan = tx.kode_paket || 'PRO';
+
+        // Perbarui kuota pohon, nama paket, status aktif, dan perpanjang masa aktif tahunan (+1 Tahun)
+        await conn.query(`
+          UPDATE trees 
+          SET 
+            max_members = ?,
+            membership_plan = ?,
+            membership_status = 'ACTIVE',
+            membership_expires_at = DATE_ADD(GREATEST(COALESCE(membership_expires_at, NOW()), NOW()), INTERVAL 1 YEAR)
+          WHERE id = ?
+        `, [
+          newMaxMembers,
+          membershipPlan,
+          tx.tree_id,
+        ]);
 
         await conn.commit();
 

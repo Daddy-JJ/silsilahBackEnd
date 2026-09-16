@@ -19,8 +19,40 @@ async function runDuitkuSetupSeed() {
   try {
     await conn.beginTransaction();
 
+    // 0. Migrasi Skema: Kolom Masa Aktif Trees & Tabel user_feedbacks
+    console.log('🛠️  0. Memastikan Kolom Masa Aktif Trees & Tabel Feedback Tersedia...');
+    const [cols] = await conn.query(`
+      SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'trees'
+    `);
+    const colNames = cols.map(c => c.COLUMN_NAME);
+
+    if (!colNames.includes('membership_plan')) {
+      await conn.query(`ALTER TABLE trees ADD COLUMN membership_plan VARCHAR(50) NOT NULL DEFAULT 'FREE' AFTER max_members`);
+    }
+    if (!colNames.includes('membership_expires_at')) {
+      await conn.query(`ALTER TABLE trees ADD COLUMN membership_expires_at DATETIME NULL AFTER membership_plan`);
+    }
+    if (!colNames.includes('membership_status')) {
+      await conn.query(`ALTER TABLE trees ADD COLUMN membership_status ENUM('ACTIVE', 'EXPIRED', 'LIFETIME') NOT NULL DEFAULT 'ACTIVE' AFTER membership_expires_at`);
+    }
+
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS user_feedbacks (
+        id VARCHAR(36) PRIMARY KEY,
+        user_id VARCHAR(36) NOT NULL,
+        category VARCHAR(50) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_feedbacks_user (user_id),
+        INDEX idx_feedbacks_created (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+    console.log('   ✅ Skema tabel trees & user_feedbacks terverifikasi.');
+
     // 1. Sinkronisasi 3 Paket Resmi di tabel upgrade_plans
-    console.log('📦 1. Menyinkronkan 3 Paket Resmi ke upgrade_plans...');
+    console.log('\n📦 1. Menyinkronkan 3 Paket Resmi ke upgrade_plans...');
     
     // Nonaktifkan paket lama
     await conn.query(`
@@ -124,13 +156,16 @@ async function runDuitkuSetupSeed() {
     `, [reviewerId, passwordHash]);
     console.log('   ✅ Akun reviewer.duitku@silsilahkeluarga.id siap.');
 
-    // 3. Buat Pohon Silsilah "Keluarga Uji Coba Duitku"
-    console.log('\n🌳 3. Membuat Pohon Silsilah Awal...');
+    // 3. Buat Pohon Silsilah "Keluarga Uji Coba Duitku" (Aktif 90 Hari > 60 Hari)
+    console.log('\n🌳 3. Membuat Pohon Silsilah Awal Reviewer (Aktif 90 Hari)...');
     await conn.query(`
-      INSERT INTO trees (id, nama_silsilah, created_by_user_id, max_members)
-      VALUES (?, 'Keluarga Uji Coba Duitku', ?, 30)
+      INSERT INTO trees (id, nama_silsilah, created_by_user_id, max_members, membership_plan, membership_expires_at, membership_status)
+      VALUES (?, 'Keluarga Uji Coba Duitku', ?, 30, 'FREE', DATE_ADD(NOW(), INTERVAL 90 DAY), 'ACTIVE')
       ON DUPLICATE KEY UPDATE
-        nama_silsilah = VALUES(nama_silsilah);
+        nama_silsilah = VALUES(nama_silsilah),
+        membership_plan = VALUES(membership_plan),
+        membership_expires_at = VALUES(membership_expires_at),
+        membership_status = VALUES(membership_status);
     `, [treeId, reviewerId]);
 
     // Role ADMIN_UTAMA

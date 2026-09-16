@@ -170,6 +170,31 @@ class AdminService {
       conn.release();
     }
   }
+
+  async getAllTrees() {
+    const conn = await this.pool.getConnection();
+    try {
+      const [rows] = await conn.query(`
+        SELECT 
+          t.id, 
+          t.nama_silsilah, 
+          t.max_members, 
+          t.membership_plan, 
+          t.membership_expires_at, 
+          t.membership_status, 
+          t.created_at,
+          u.nama_lengkap as creator_name,
+          u.email as creator_email,
+          (SELECT COUNT(*) FROM family_members WHERE tree_id = t.id) as total_members
+        FROM trees t
+        LEFT JOIN users u ON t.created_by_user_id = u.id
+        ORDER BY t.created_at DESC
+      `);
+      return rows;
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = AdminService;

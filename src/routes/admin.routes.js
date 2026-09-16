@@ -22,8 +22,9 @@ function createAdminRoutes(container) {
     });
   });
 
-  // 1. Dashboard Statistik
+  // 1. Dashboard Statistik & Direktori Semesta
   router.get('/stats', adminController.getStats);
+  router.get('/trees', adminController.getAllTrees);
 
   // 2. CRUD Paket Upgrade
   router.get('/plans', adminController.getPlans);

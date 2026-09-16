@@ -124,6 +124,15 @@ class AdminController {
       next(err);
     }
   };
+
+  getAllTrees = async (req, res, next) => {
+    try {
+      const trees = await this.adminService.getAllTrees();
+      return sendSuccess(res, trees, 'Direktori semesta pohon berhasil diambil');
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 module.exports = AdminController;

@@ -125,6 +125,11 @@ const updateMarriageSchema = z.object({
   tanggal_pernikahan: dateSchema.nullable().optional(),
 });
 
+const feedbackSchema = z.object({
+  category: z.string().min(1, 'Kategori feedback wajib diisi').max(50),
+  message: z.string().min(3, 'Pesan feedback minimal 3 karakter').max(5000),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -143,4 +148,5 @@ module.exports = {
   updateUserRoleSchema,
   updateCollaboratorRoleSchema,
   updateMarriageSchema,
+  feedbackSchema,
 };

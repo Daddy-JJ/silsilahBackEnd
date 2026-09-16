@@ -29,20 +29,29 @@ ON DUPLICATE KEY UPDATE
     system_role = VALUES(system_role),
     is_verified = VALUES(is_verified);
 
--- 2. Buat Pohon Silsilah Awal Milik Akun Reviewer
+-- 2. Buat Pohon Silsilah Awal Milik Akun Reviewer (Aktif 90 Hari > 60 Hari)
 INSERT INTO trees (
     id,
     nama_silsilah,
     created_by_user_id,
-    max_members
+    max_members,
+    membership_plan,
+    membership_expires_at,
+    membership_status
 ) VALUES (
     'b2222222-0000-4000-8000-000000000001',
     'Keluarga Uji Coba Duitku',
     'a1111111-0000-4000-8000-000000000001',
-    30
+    30,
+    'FREE',
+    DATE_ADD(NOW(), INTERVAL 90 DAY),
+    'ACTIVE'
 )
 ON DUPLICATE KEY UPDATE
-    nama_silsilah = VALUES(nama_silsilah);
+    nama_silsilah = VALUES(nama_silsilah),
+    membership_plan = VALUES(membership_plan),
+    membership_expires_at = VALUES(membership_expires_at),
+    membership_status = VALUES(membership_status);
 
 -- 3. Tetapkan Peran ADMIN_UTAMA untuk Reviewer pada Pohon Tersebut
 INSERT INTO tree_members (
