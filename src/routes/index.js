@@ -54,6 +54,24 @@ function createApiRouter(container) {
     }
   });
 
+  // Feedback endpoint: /api/v1/feedback
+  router.post('/feedback', (req, res) => {
+    const { category, message, user_email, user_name } = req.body;
+    if (req.log) {
+      req.log.info({ category, user_email, user_name, message }, '[User Feedback Received]');
+    } else {
+      console.log('[User Feedback Received]', { category, user_email, user_name, message });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Terima kasih! Masukan Anda telah berhasil diterima.',
+      data: {
+        category,
+        receivedAt: new Date().toISOString(),
+      },
+    });
+  });
+
   // Admin routes: /api/v1/admin
   router.use('/admin', createAdminRoutes(container));
 
