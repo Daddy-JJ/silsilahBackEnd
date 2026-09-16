@@ -105,7 +105,7 @@ const updateSettingsSchema = z.record(z.string(), z.string().or(z.number()));
 const paymentInquirySchema = z.object({
   treeId: z.string().uuid('treeId harus berupa UUID valid'),
   planId: z.string().uuid('planId harus berupa UUID valid'),
-  paymentMethod: z.string().min(1).default('SP'), // SP = ShopeePay / QRIS
+  paymentMethod: z.string().optional().default(''),
   returnUrl: z.string().url().optional(),
 });
 

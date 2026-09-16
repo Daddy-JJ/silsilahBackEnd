@@ -59,9 +59,17 @@ class TransactionRepository {
 
   async findByMerchantOrderIdWithLock(orderId, conn) {
     const sql = `
-      SELECT t.*, p.target_max_members
+      SELECT 
+        t.*, 
+        u.email as user_email, 
+        u.nama_lengkap as user_nama, 
+        p.nama_paket, 
+        p.target_max_members, 
+        tr.nama_silsilah
       FROM transactions t
+      LEFT JOIN users u ON t.user_id = u.id
       LEFT JOIN upgrade_plans p ON t.plan_id = p.id
+      LEFT JOIN trees tr ON t.tree_id = tr.id
       WHERE t.merchant_order_id = ?
       FOR UPDATE
     `;

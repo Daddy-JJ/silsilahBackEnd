@@ -4,6 +4,38 @@ Semua perubahan penting pada proyek **Silsilah Keluarga Kolaboratif** didokument
 
 ---
 
+## [3.1.0] - 2026-09-16 — *Duitku Pop Sandbox Integration & Reviewer Testing Account*
+
+### Ditambahkan (Added)
+- **Integrasi Duitku Pop API (Sandbox & Production)**:
+  - Endpoint Create Invoice Duitku Pop (`https://api-sandbox.duitku.com/api/merchant/createInvoice` dan fallback production `https://api-prod.duitku.com/api/merchant/createInvoice`).
+  - Otentikasi Header Duitku Pop menggunakan `x-duitku-signature: HMAC-SHA256(merchantCode + timestamp, apiKey)` dan `x-duitku-timestamp`.
+  - Mengembalikan `reference` (`DUITKU_REFERENCE`) dan `paymentUrl` ke frontend untuk menampilkan modal popup Duitku Pop.
+- **Validasi Webhook Callback Duitku Pop**:
+  - Verifikasi Signature `HMAC-SHA256(merchantCode + amount + merchantOrderId, apiKey)` dengan timing-safe comparison dan fallback multi-format.
+  - Transaksi database ACID dengan row-level lock (`FOR UPDATE`), idempotency check, peningkatan otomatis kuota pohon `max_members`, dan pengiriman email kuitansi resmi via `emailService.sendPaymentInvoiceEmail`.
+- **3 Skema Paket Resmi di `upgrade_plans`**:
+  - `FREE`: Paket Dasar (0 IDR, 30 anggota, 1 pohon, 1 kolaborator)
+  - `KELUARGA_BESAR`: Paket Keluarga Besar (67.000 IDR, 100 anggota, 2 pohon, 3 kolaborator)
+  - `DINASTI`: Paket Dinasti (99.000 IDR, 200 anggota, 4 pohon, 5 kolaborator)
+- **Script Seeder & SQL**:
+  - `database/seed_plans.sql`: SQL seed untuk 3 paket resmi dengan `ON DUPLICATE KEY UPDATE`.
+  - `database/seed_reviewer.sql`: SQL seed akun reviewer Duitku QA dan pohon silsilah awal.
+  - `database/seed_duitku_setup.js`: Seeder Node.js (`npm run seed:duitku`) untuk setup otomatis.
+- **Akun Khusus Reviewer Duitku QA**:
+  - Email: `reviewer.duitku@silsilahkeluarga.id`
+  - Password: `DuitkuTest2026!` (hash Bcrypt)
+  - Pohon Silsilah: *"Keluarga Uji Coba Duitku"* lengkap dengan 5 anggota (3 generasi: Kakek, Nenek, Ayah, Ibu, Anak) dan 2 relasi perkawinan agar kanvas visual interaktif langsung aktif.
+- **Konfigurasi Environment**:
+  - `DUITKU_MERCHANT_CODE`, `DUITKU_API_KEY`, `DUITKU_ENV`, `DUITKU_CALLBACK_URL` di `.env` dan `.env.example`.
+
+### Diubah (Changed)
+- **`src/validations/index.js`**: `paymentInquirySchema` melonggarkan `paymentMethod` menjadi opsional agar modal Duitku Pop dapat menampilkan seluruh opsi pembayaran.
+- **`src/repositories/transactionRepository.js`**: `findByMerchantOrderIdWithLock` diperluas menyertakan join ke tabel `users` dan `trees` untuk data invoice lengkap.
+- **`src/container.js`**: dependency injection `emailService` ke dalam `PaymentService`.
+
+---
+
 ## [3.0.0] - 2026-09-14 — *Full Production Release & Shared Hosting Hardening*
 
 ### Ditambahkan (Added)

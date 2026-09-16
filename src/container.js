@@ -96,7 +96,8 @@ const paymentService = new PaymentService(
   upgradePlanRepository,
   systemSettingRepository,
   treeRepository,
-  pool
+  pool,
+  emailService
 );
 
 // 3. Lapisan Controllers
