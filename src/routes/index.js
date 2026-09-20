@@ -12,6 +12,17 @@ const { getFrontendUrl } = require('../utils/urlHelper');
 function createApiRouter(container) {
   const router = express.Router();
 
+  // Root /api/v1 endpoint
+  router.get('/', (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'Silsilah Keluarga API v1 Service is active',
+      version: '1.0.0',
+      health: `${req.baseUrl}/health`,
+      frontendUrl: getFrontendUrl(),
+    });
+  });
+
   // Health check endpoint
   router.get('/health', (req, res) => {
     res.status(200).json({
