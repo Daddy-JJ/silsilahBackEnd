@@ -99,7 +99,7 @@ class PaymentService {
     const backendCallbackUrl =
       process.env.DUITKU_CALLBACK_URL ||
       process.env.BACKEND_CALLBACK_URL ||
-      'https://apisilsilah.kartunamadigital.id/api/v1/payments/duitku/callback';
+      'https://api.silsilahkeluarga.id/api/v1/payments/duitku/callback';
 
     const defaultFrontendUrl = getFrontendUrl();
     const defaultReturnUrl =

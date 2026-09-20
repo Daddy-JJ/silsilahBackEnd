@@ -121,15 +121,15 @@ Mencegah paradoks biologis silsilah (anak menjadi leluhur dari dirinya sendiri):
 ```bash
 # Biarkan kosong pada localhost (otomatis memanfaatkan Vite Proxy port 5000)
 # Diisi pada dashboard Vercel Project Settings:
-VITE_API_BASE_URL=https://apisilsilah.kartunamadigital.id/api/v1
+VITE_API_BASE_URL=https://api.silsilahkeluarga.id/api/v1
 ```
 
 ### Environment Backend (`.env` cPanel Node.js App)
 ```bash
 PORT=5000
 NODE_ENV=production
-# Application Root: public_html/apisilsilah.kartunamadigital.id
-# Application URL: apisilsilah.kartunamadigital.id
+# Application Root: public_html/api.silsilahkeluarga.id
+# Application URL: api.silsilahkeluarga.id
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=karj9582_silsilah_user
