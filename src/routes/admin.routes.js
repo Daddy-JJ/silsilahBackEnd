@@ -5,6 +5,7 @@ const {
   updateUpgradePlanSchema,
   updateSettingsSchema,
   updateUserRoleSchema,
+  updateTreeMembershipSchema,
 } = require('../validations');
 
 function createAdminRoutes(container) {
@@ -25,6 +26,11 @@ function createAdminRoutes(container) {
   // 1. Dashboard Statistik & Direktori Semesta
   router.get('/stats', adminController.getStats);
   router.get('/trees', adminController.getAllTrees);
+  router.put(
+    '/trees/:id/membership',
+    validateBody(updateTreeMembershipSchema),
+    adminController.updateTreeMembership
+  );
 
   // 2. CRUD Paket Upgrade
   router.get('/plans', adminController.getPlans);

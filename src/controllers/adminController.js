@@ -133,6 +133,15 @@ class AdminController {
       next(err);
     }
   };
+
+  updateTreeMembership = async (req, res, next) => {
+    try {
+      const result = await this.adminService.updateTreeMembership(req.params.id, req.body);
+      return sendSuccess(res, result, 'Paket keanggotaan semesta berhasil diperbarui');
+    } catch (err) {
+      next(err);
+    }
+  };
 }
 
 module.exports = AdminController;

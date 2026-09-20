@@ -195,6 +195,79 @@ class AdminService {
       conn.release();
     }
   }
+
+  async updateTreeMembership(treeId, {
+    membership_plan,
+    max_members,
+    membership_status = 'ACTIVE',
+    membership_expires_at = null,
+    duration_months = null
+  }) {
+    const conn = await this.pool.getConnection();
+    try {
+      const [trees] = await conn.query('SELECT * FROM trees WHERE id = ?', [treeId]);
+      if (trees.length === 0) {
+        throw new NotFoundError('Pohon keluarga tidak ditemukan.');
+      }
+      const currentTree = trees[0];
+
+      let finalExpiresAt = membership_expires_at;
+
+      if (membership_status === 'LIFETIME') {
+        finalExpiresAt = null;
+      } else if (duration_months && !finalExpiresAt) {
+        const currentExp = currentTree.membership_expires_at ? new Date(currentTree.membership_expires_at) : null;
+        const now = new Date();
+        const baseDate = (currentExp && currentExp > now) ? currentExp : now;
+        baseDate.setMonth(baseDate.getMonth() + Number(duration_months));
+        const pad = (n) => String(n).padStart(2, '0');
+        finalExpiresAt = `${baseDate.getFullYear()}-${pad(baseDate.getMonth() + 1)}-${pad(baseDate.getDate())} ${pad(baseDate.getHours())}:${pad(baseDate.getMinutes())}:${pad(baseDate.getSeconds())}`;
+      } else if (finalExpiresAt) {
+        const d = new Date(finalExpiresAt);
+        if (!isNaN(d.getTime())) {
+          const pad = (n) => String(n).padStart(2, '0');
+          finalExpiresAt = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+      }
+
+      await conn.query(`
+        UPDATE trees
+        SET 
+          membership_plan = ?,
+          max_members = ?,
+          membership_status = ?,
+          membership_expires_at = ?
+        WHERE id = ?
+      `, [
+        membership_plan,
+        Number(max_members),
+        membership_status,
+        finalExpiresAt,
+        treeId
+      ]);
+
+      const [updatedRows] = await conn.query(`
+        SELECT 
+          t.id, 
+          t.nama_silsilah, 
+          t.max_members, 
+          t.membership_plan, 
+          t.membership_expires_at, 
+          t.membership_status, 
+          t.created_at,
+          u.nama_lengkap as creator_name,
+          u.email as creator_email,
+          (SELECT COUNT(*) FROM family_members WHERE tree_id = t.id) as total_members
+        FROM trees t
+        LEFT JOIN users u ON t.created_by_user_id = u.id
+        WHERE t.id = ?
+      `, [treeId]);
+
+      return updatedRows[0];
+    } finally {
+      conn.release();
+    }
+  }
 }
 
 module.exports = AdminService;

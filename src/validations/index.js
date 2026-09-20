@@ -130,6 +130,14 @@ const feedbackSchema = z.object({
   message: z.string().min(3, 'Pesan feedback minimal 3 karakter').max(5000),
 });
 
+const updateTreeMembershipSchema = z.object({
+  membership_plan: z.string().min(1, 'Kode paket wajib diisi').max(50),
+  max_members: z.number().int().min(1, 'Kapasitas maksimal anggota minimal 1'),
+  membership_status: z.enum(['ACTIVE', 'EXPIRED', 'LIFETIME']).optional().default('ACTIVE'),
+  membership_expires_at: z.string().nullable().optional(),
+  duration_months: z.number().int().min(1).optional(),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
@@ -149,4 +157,5 @@ module.exports = {
   updateCollaboratorRoleSchema,
   updateMarriageSchema,
   feedbackSchema,
+  updateTreeMembershipSchema,
 };
