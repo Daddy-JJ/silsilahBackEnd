@@ -106,6 +106,11 @@ class PaymentService {
       returnUrl ||
       `${defaultFrontendUrl}/trees/${treeId}?payment=finish`;
 
+    // Pisahkan nama depan dan nama belakang untuk Duitku customerDetail
+    const nameParts = (user.nama_lengkap || 'Pengguna Silsilah').trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Pengguna';
+    const lastName = nameParts.slice(1).join(' ') || firstName;
+
     const inquiryPayload = {
       paymentAmount: finalAmount,
       merchantOrderId,
@@ -116,6 +121,19 @@ class PaymentService {
       callbackUrl: backendCallbackUrl,
       returnUrl: defaultReturnUrl,
       expiryPeriod: 1440, // 24 jam
+      itemDetails: [
+        {
+          name: `${plan.nama_paket} (${plan.target_max_members} Anggota)`,
+          price: finalAmount,
+          quantity: 1,
+        },
+      ],
+      customerDetail: {
+        firstName,
+        lastName,
+        email: user.email,
+        phoneNumber: user.phone_number || '',
+      },
       additionalParam: JSON.stringify({ treeId, planId, userId: user.id }),
       merchantUserInfo: user.id,
     };
@@ -192,6 +210,7 @@ class PaymentService {
       reference,
       paymentUrl,
       amount: finalAmount,
+      environment,
       plan: {
         id: plan.id,
         nama_paket: plan.nama_paket,
