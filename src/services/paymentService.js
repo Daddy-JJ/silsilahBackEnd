@@ -37,6 +37,13 @@ class PaymentService {
   }
 
   /**
+   * Helper untuk menghitung SHA256 signature
+   */
+  _generateSha256(str) {
+    return crypto.createHash('sha256').update(str).digest('hex');
+  }
+
+  /**
    * Helper untuk menghitung HMAC-SHA256 signature
    */
   _generateHmacSha256(str, key) {
@@ -75,11 +82,11 @@ class PaymentService {
       throw new UnprocessableEntityError('Nominal pembayaran paket tidak valid.');
     }
 
-    // 3. Ambil Kredensial Duitku dari ENV atau system_settings
+    // 3. Ambil Kredensial Duitku dari system_settings (dashboard Super Admin) atau ENV
     const { map: settings } = await this.systemSettingRepository.getAll();
-    const merchantCode = process.env.DUITKU_MERCHANT_CODE || settings.duitku_merchant_code || '';
-    const apiKey = process.env.DUITKU_API_KEY || settings.duitku_api_key || '';
-    const environment = process.env.DUITKU_ENV || settings.duitku_environment || 'sandbox';
+    const merchantCode = settings.duitku_merchant_code || process.env.DUITKU_MERCHANT_CODE || '';
+    const apiKey = settings.duitku_api_key || process.env.DUITKU_API_KEY || '';
+    const environment = settings.duitku_environment || process.env.DUITKU_ENV || 'sandbox';
 
     // 4. Generate Unique Merchant Order ID
     const timestamp = Date.now().toString();
@@ -92,8 +99,8 @@ class PaymentService {
         ? 'https://api-prod.duitku.com/api/merchant/createInvoice'
         : 'https://api-sandbox.duitku.com/api/merchant/createInvoice';
 
-    // Duitku Pop Signature Header: HMAC-SHA256(merchantCode + timestamp, apiKey)
-    const signature = this._generateHmacSha256(`${merchantCode}${timestamp}`, apiKey);
+    // Duitku Pop Signature Header resmi: SHA256(merchantCode + timestamp + apiKey)
+    const signature = this._generateSha256(`${merchantCode}${timestamp}${apiKey}`);
 
     // Siapkan Callback & Return URL
     const backendCallbackUrl =
@@ -239,10 +246,10 @@ class PaymentService {
       throw new BadRequestError('Payload callback Duitku tidak lengkap.');
     }
 
-    // 1. Ambil API Key Duitku dari ENV atau system_settings
+    // 1. Ambil API Key Duitku dari system_settings (dashboard Super Admin) atau ENV
     const { map: settings } = await this.systemSettingRepository.getAll();
-    const apiKey = process.env.DUITKU_API_KEY || settings.duitku_api_key || '';
-    const configuredMerchantCode = process.env.DUITKU_MERCHANT_CODE || settings.duitku_merchant_code || '';
+    const apiKey = settings.duitku_api_key || process.env.DUITKU_API_KEY || '';
+    const configuredMerchantCode = settings.duitku_merchant_code || process.env.DUITKU_MERCHANT_CODE || '';
 
     // Jika merchant code di konfigurasi diisi, pastikan cocok
     if (configuredMerchantCode && merchantCode !== configuredMerchantCode) {

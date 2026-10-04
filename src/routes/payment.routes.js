@@ -17,8 +17,9 @@ function createPaymentRoutes({ paymentController, authMiddleware }) {
   );
 
   // 3. Webhook Duitku: Notifikasi pembayaran instan dari server Duitku
-  // Publik (diproteksi via MD5 signature check di paymentService)
+  // Publik (diproteksi via MD5 / HMAC signature check di paymentService)
   router.post('/duitku/callback', paymentController.duitkuCallback);
+  router.post('/callback', paymentController.duitkuCallback);
 
   // 4. Terproteksi: Cek status transaksi pembayaran
   router.get(
